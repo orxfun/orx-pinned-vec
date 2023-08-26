@@ -1,0 +1,14 @@
+[package]
+name = "orx-pinned-vec"
+version = "0.1.0"
+edition = "2021"
+authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
+description = "PinnedVec trait serves as the marker with common vector functionalities for vector implementations which preserves the memory locations of their elements; i.e., keeps them pinned."
+license = "MIT"
+repository = "https://github.com/orxfun/orx-pinned-vec/"
+keywords = ["vec", "array", "vector", "pinned", "memory"]
+categories = ["data-structures"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
