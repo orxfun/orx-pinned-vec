@@ -129,3 +129,4 @@ impl NotSelfRefVecItem for u16 {}
 impl NotSelfRefVecItem for u32 {}
 impl NotSelfRefVecItem for u64 {}
 impl NotSelfRefVecItem for u8 {}
+impl NotSelfRefVecItem for usize {}
