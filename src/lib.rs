@@ -1,5 +1,5 @@
-//! `PinnedVec` trait serves as the marker with common vector functionalities
-//! for vector implementations which
+//! `PinnedVec` trait serves as the marker trait providing common vector functionalities
+//! for vector implementations which in addition
 //!
 //! * preserves the memory locations of their elements; i.e., keeps them pinned.
 //!
@@ -7,27 +7,20 @@
 //! to implement complex data structures child structures of which often hold references
 //! to each other, such as trees or graphs.
 //!
-//! The following methods which would break this guarantee are `unsafe` for pinned vectors unlike
-//! the standard vector:
-//!
-//! * `insert`
-//! * `remove`
-//! * `pop`
-//!
-//! Since, pinned vectors will often contain items holding references to each other,
-//! default `clone` implementation is also `unsafe`.
-//!
 //! # Safety
 //!
-//! The abovementioned feature eliminates a specific set of errors leading to undefined behavior (UB),
+//! The pinned elements feature eliminates a specific set of errors leading to undefined behavior (UB),
 //! and hence, allows to work with a more flexible borrow checker.
 //! Consider for instance the following code block which does not compile.
 //!
 //! ```rust
 //! let mut vec = Vec::with_capacity(2);
 //! vec.extend_from_slice(&[0, 1]);
+//!
 //! let ref0 = &vec[0];
+//!
 //! vec.push(2);
+//!
 //! // let value0 = *ref0; // does not compile!
 //! ```
 //!
@@ -49,6 +42,18 @@
 //! An imp-vec stands for immutable-push-vector, literally allowing to push to the vector with an
 //! immutable reference.
 //! This turns out to be a very useful opeartion, allowing to conveniently implement tricky data structures.
+//!
+//! # Safety (cont'd)
+//!
+//! The following methods which would break the pinned locations guarantee
+//! are marked as `unsafe` for pinned vectors unlike standard vector implementations:
+//!
+//! * `insert`
+//! * `remove`
+//! * `pop`
+//!
+//! Since, pinned vectors will often contain items holding references to each other,
+//! default `clone` implementation is also `unsafe`.
 
 #![warn(
     missing_docs,

@@ -1,6 +1,6 @@
 [package]
 name = "orx-pinned-vec"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "PinnedVec trait serves as a marker trait with common vector functionalities which additionally preserves the memory locations of vector elements; i.e., keeps them pinned."
