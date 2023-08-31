@@ -5,7 +5,23 @@ for vector implementations which
 
 * preserves the memory locations of their elements; i.e., keeps them pinned.
 
-This feature eliminates a specific set of errors leading to undefined behavior (UB),
+The goal of the pinned vector implementations is to make it convenient, efficient and safe
+to implement complex data structures child structures of which often hold references
+to each other, such as trees or graphs.
+
+The following methods which would break this guarantee are `unsafe` for pinned vectors unlike
+the standard vector:
+
+* `insert`
+* `remove`
+* `pop`
+
+Since, pinned vectors will often contain items holding references to each other,
+default `clone` implementation is also `unsafe`.
+
+# Safety
+
+The abovementioned feature eliminates a specific set of errors leading to undefined behavior (UB),
 and hence, allows to work with a more flexible borrow checker.
 Consider for instance the following code block which does not compile.
 
@@ -30,8 +46,8 @@ memory locations do not happen; and hence, eliminating the cause of the UB obser
 See, [`FixedVec`](https://crates.io/crates/orx-fixed-vec) and [`SplitVec`](https://crates.io/crates/orx-split-vec)
 for two basic pinned-vector implementations.
 
-Further, see [`ImpVec`](https://crates.io/crates/orx-imp-vec) crate which allows converting
-any `PinnedVec` implementation into an imp-vec.
+Further, see [`ImpVec`](https://crates.io/crates/orx-imp-vec) which allows converting any `PinnedVec`
+implementation into an imp-vec.
 An imp-vec stands for immutable-push-vector, literally allowing to push to the vector with an
 immutable reference.
 This turns out to be a very useful opeartion, allowing to conveniently implement tricky data structures.
