@@ -97,7 +97,7 @@ pub trait PinnedVec<T> {
     ///
     /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
     /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
-    unsafe fn insert(&mut self, index: usize, element: T);
+    unsafe fn unsafe_insert(&mut self, index: usize, element: T);
     /// Removes and returns the element at position index within the vector, shifting all elements after it to the left.
     ///
     /// # Panics
@@ -118,7 +118,7 @@ pub trait PinnedVec<T> {
     ///
     /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
     /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
-    unsafe fn remove(&mut self, index: usize) -> T;
+    unsafe fn unsafe_remove(&mut self, index: usize) -> T;
     /// Removes the last element from a vector and returns it, or None if it is empty.
     ///
     /// # Safety
@@ -132,7 +132,7 @@ pub trait PinnedVec<T> {
     ///
     /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
     /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
-    unsafe fn pop(&mut self) -> Option<T>;
+    unsafe fn unsafe_pop(&mut self) -> Option<T>;
     /// Creates and returns a clone of the vector.
     ///
     /// # Safety
@@ -149,7 +149,7 @@ pub trait PinnedVec<T> {
     /// * In this case, elements of `cl` are pointing to elements of `vec`.
     ///     * This is not correct, as these references are to be kept internal to the vector.
     ///     * Furthermore, if `vec` is dropped, `cl` elements will contain invalid references leading to UB.
-    unsafe fn clone(&self) -> Self
+    unsafe fn unsafe_clone(&self) -> Self
     where
         T: Clone;
 

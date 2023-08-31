@@ -85,19 +85,23 @@ where
     T: NotSelfRefVecItem,
     V: PinnedVec<T>,
 {
+    #[inline(always)]
     fn insert(&mut self, index: usize, element: T) {
-        unsafe { <Self as PinnedVec<T>>::insert(self, index, element) }
+        unsafe { self.unsafe_insert(index, element) }
     }
+    #[inline(always)]
     fn remove(&mut self, index: usize) -> T {
-        unsafe { <Self as PinnedVec<T>>::remove(self, index) }
+        unsafe { self.unsafe_remove(index) }
     }
+    #[inline(always)]
     fn pop(&mut self) -> Option<T> {
-        unsafe { <Self as PinnedVec<T>>::pop(self) }
+        unsafe { self.unsafe_pop() }
     }
+    #[inline(always)]
     fn clone(&self) -> Self
     where
         T: Clone,
     {
-        unsafe { <Self as PinnedVec<T>>::clone(self) }
+        unsafe { self.unsafe_clone() }
     }
 }
