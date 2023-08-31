@@ -19,12 +19,23 @@ use std::fmt::{Debug, Formatter, Result};
 /// The implementing struct must guarantee that pushing or extending the vector
 /// does not cause the memory locations of already added elements to change.
 pub trait PinnedVec<T> {
-    /// Returns the total number of elements the vector can hold without reallocating.
-    fn capacity(&self) -> usize;
     /// Clears the vector, removing all values.
     ///
     /// Note that this method has no effect on the allocated capacity of the vector.
+    ///
+    /// # Safety
+    ///
+    /// `clear` operation is **safe** both when `T: NotSelfReferencingVecItem` or `T: SelfReferencingVecItem`.
+    ///
+    /// The prior is obvious; the reason why `T: SelfReferencingVecItem` is safe is as follows:
+    ///
+    /// * elements holding references to each other will be cleaned all together; hence,
+    /// none of them can have an invalid reference;
+    /// * we cannot have a reference to a vector element defined before the `clear`,
+    /// since `clear` requires a `mut` reference.
     fn clear(&mut self);
+    /// Returns the total number of elements the vector can hold without reallocating.
+    fn capacity(&self) -> usize;
     /// Clones and appends all elements in a slice to the Vec.
     ///
     /// Iterates over the slice other, clones each element, and then appends it to this Vec. The other slice is traversed in-order.
@@ -59,25 +70,88 @@ pub trait PinnedVec<T> {
     /// even if the resulting reference is not used.
     unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T;
 
-    /// Inserts an element at position index within the vector, shifting all elements after it to the right.
-    ///
-    /// # Panics
-    /// Panics if `index >= len`.
-    fn insert(&mut self, index: usize, element: T);
     /// Returns true if the vector contains no elements.
     fn is_empty(&self) -> bool;
     /// Returns the number of elements in the vector, also referred to as its ‘length’.
     fn len(&self) -> usize;
-    /// Removes the last element from a vector and returns it, or None if it is empty.
-    fn pop(&mut self) -> Option<T>;
     /// Appends an element to the back of a collection.
     fn push(&mut self, value: T);
+
+    // unsafe
+    /// Inserts an element at position index within the vector, shifting all elements after it to the right.
+    ///
+    /// # Panics
+    /// Panics if `index >= len`.
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// `insert` is unsafe since insertion of a new element at an arbitrary position of the vector
+    /// typically changes the positions of already existing elements.
+    ///
+    /// When the elements are holding references to other elements of the vector,
+    /// this change in positions makes the references invalid.
+    ///
+    /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
+    /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
+    unsafe fn insert(&mut self, index: usize, element: T);
     /// Removes and returns the element at position index within the vector, shifting all elements after it to the left.
     ///
     /// # Panics
     ///
     /// Panics if index is out of bounds.
-    fn remove(&mut self, index: usize) -> T;
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// `remove` is unsafe since removal of an element at an arbitrary position of the vector
+    /// typically changes the positions of already existing elements.
+    ///
+    /// Further, it is possible that at least one of the remaining elements is
+    /// pointing to the element which is being removed.
+    ///
+    /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
+    /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
+    unsafe fn remove(&mut self, index: usize) -> T;
+    /// Removes the last element from a vector and returns it, or None if it is empty.
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// `pop` is unsafe since it is possible that at least one of the remaining elements is
+    /// pointing to the last element which is being popped.
+    ///
+    /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
+    /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
+    unsafe fn pop(&mut self) -> Option<T>;
+    /// Creates and returns a clone of the vector.
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// To understand why `clone` is unsafe when `T` is not `NotSelfRefVecItem`,
+    /// consider the following example.
+    ///
+    /// * let `vec` be the initial vector with self referencing vector elements.
+    /// * let `cl` be the clone of `A`; i.e., 'let cl = vec.clone()`.
+    /// * In this case, elements of `cl` are pointing to elements of `vec`.
+    ///     * This is not correct, as these references are to be kept internal to the vector.
+    ///     * Furthermore, if `vec` is dropped, `cl` elements will contain invalid references leading to UB.
+    unsafe fn clone(&self) -> Self
+    where
+        T: Clone;
 
     // required for common trait implementations
     /// This method tests for `self` and `other` values to be equal, and is used by `==`.
