@@ -133,6 +133,47 @@ pub trait PinnedVec<T> {
     /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
     /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
     unsafe fn unsafe_pop(&mut self) -> Option<T>;
+    /// Swaps two elements in the slice.
+    ///
+    /// If `a` equals to `b`, it's guaranteed that elements won't change value.
+    ///
+    /// # Arguments
+    ///
+    /// * a - The index of the first element
+    /// * b - The index of the second element
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// `swap` is unsafe since it is possible that other elements are referencing one of the
+    /// elements to be swapped.
+    /// The swap operation does not lead to an undefined behavior in the classical sense;
+    /// however, would invalidate the inter-elements-references.
+    ///
+    /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
+    /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
+    unsafe fn unsafe_swap(&mut self, a: usize, b: usize);
+    /// Shortens the vector, keeping the first `len` elements and dropping
+    /// the rest.
+    ///
+    /// If `len` is greater than the vector's current length, this has no
+    /// effect.
+    ///
+    /// # Safety
+    ///
+    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
+    /// To pick the conservative approach, every T which does not implement `NotSelfRefVecItem`
+    /// is assumed to be a vector item referencing other vector items.
+    ///
+    /// `truncate` is unsafe since it is possible that remaining elements are referencing
+    /// to elements which are dropped by the truncate method.
+    ///
+    /// On the other hand, any vector implementing `PinnedVec<T>` where `T: NotSelfRefVecItem`
+    /// implements `PinnedVecSimple<T>` which implements the safe version of this method.
+    unsafe fn unsafe_truncate(&mut self, len: usize);
     /// Creates and returns a clone of the vector.
     ///
     /// # Safety

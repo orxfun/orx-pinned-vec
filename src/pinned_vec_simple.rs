@@ -68,6 +68,27 @@ where
     /// in this case, pinned vector shares the same safety requirements as `std::vec::Vec` which is readily
     /// provided by the borrow checker.
     fn pop(&mut self) -> Option<T>;
+    /// Swaps two elements in the slice.
+    ///
+    /// If `a` equals to `b`, it's guaranteed that elements won't change value.
+    ///
+    /// # Arguments
+    ///
+    /// * a - The index of the first element
+    /// * b - The index of the second element
+    ///
+    /// # Safety
+    ///
+    /// `swap` operation for a `PinnedVecSimple` where the elements are `T: NotSelfRefVecItem` is **safe**;
+    /// in this case, pinned vector shares the same safety requirements as `std::vec::Vec` which is readily
+    /// provided by the borrow checker.
+    fn swap(&mut self, a: usize, b: usize);
+    /// Shortens the vector, keeping the first `len` elements and dropping
+    /// the rest.
+    ///
+    /// If `len` is greater than the vector's current length, this has no
+    /// effect.
+    fn truncate(&mut self, len: usize);
     /// Creates and returns a clone of the vector.
     ///
     /// # Safety
@@ -97,6 +118,15 @@ where
     fn pop(&mut self) -> Option<T> {
         unsafe { self.unsafe_pop() }
     }
+    #[inline(always)]
+    fn swap(&mut self, a: usize, b: usize) {
+        unsafe { self.unsafe_swap(a, b) }
+    }
+    #[inline(always)]
+    fn truncate(&mut self, len: usize) {
+        unsafe { self.unsafe_truncate(len) }
+    }
+
     #[inline(always)]
     fn clone(&self) -> Self
     where
