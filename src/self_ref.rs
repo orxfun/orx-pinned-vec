@@ -1,23 +1,10 @@
-use std::num::*;
+#[allow(unused_variables)]
 
-/// Marker trait for types to be contained in a `PinnedVec` which do not hold a field
+/// A type to be contained in a `PinnedVec` which does hold a field
 /// which is a reference to a another element of the same vector.
 ///
-/// Note that any type which does not implement `NotSelfRefVecItem` marker trait
-/// is accepted to be a self-referencing-vector-item due to the following:
-///
-/// * `PinnedVec` is particularly useful for defining complex data structures
-/// which elements of which often references each other;
-/// in other words, most of the time `PinnedVec<T>` will be used.
-/// * To be able to use `PinnedVecSimple: PinnedVec` for safe calls to `insert`, `remove`, `pop` and `clone`,
-/// one must explicitly implement `NotSelfRefVecItem` for the elements
-/// explicitly stating the safety of the usage.
-/// * Finally, this trait is already implemented for most of the common
-/// primitive types.
-///
-/// It is more brief to describe what a self-referencing-vector-item is
-/// rather than describing `NotSelfRefVecItem`.
-/// Therefore, such an example struct is demonstrated in the following section.
+/// These data types are particularly useful for data types defining
+/// relations about its children such as trees or graphs.
 ///
 /// # Example
 ///
@@ -38,6 +25,7 @@ use std::num::*;
 /// * requires less heap allocations: only the vector is allocated together with all its elements,
 /// as opposed to allocating each node separately in an arbitrary memory location.
 ///
+/// # Safety
 /// On the other hand, such data structures require more care about safety and correctness.
 /// Since each vector element can hold a reference to another vector element,
 /// `mut` methods need to be investigated carefully.
@@ -59,74 +47,36 @@ use std::num::*;
 /// (including removal of elements from the vector)
 /// are considered to be **`unsafe`** when `T` is not a `NotSelfRefVecItem`.
 ///
-/// # Significance
+/// # Safety - [ImpVec](https://crates.io/crates/orx-imp-vec)
 ///
-/// ## Unsafe methods when `T` is not a `NotSelfRefVecItem`
+/// `PinnedVec` is in the core of the types which aim to make defining
+/// relational data structures safe and convenient.
+/// This trait defines required methods which `ImpVec` requires
+/// to provide the safe api to achieve this goal.
 ///
-/// Whether the element type of a `PinnedVec` is `NotSelfRefVecItem` or not
-/// has an impact on the mutable operations which change positions of already pushed elements.
+/// All these methods have default implementations which simply return nothing.
+/// Depending on the data structure to be defined,
+/// it is sufficient to implement the relevant methods.
 ///
-/// The following is the complete list of these methods:
-///
-/// * `insert`
-/// * `remove`
-/// * `pop`
-/// * `clone`
-///
-/// These methods can be called safely when `T: NotSelfRefVecItem`;
-/// only within an `unsafe` block otherwise.
-///
-/// ## Safe methods regardless of `T` is a `NotSelfRefVecItem` or not
-///
-/// On the other hand, `mut` methods such as `push` or `extend_from_slice` are **safe**
-/// since a `PinnedVec` keeps positions of already pushed elements intact while growing.
-/// Therefore, references to already pushed elements will remain valid.
-///
-/// Although it leads to removal of elements,
-/// `clear` is also **safe** for all element types.
-/// This is because all elements are dropped together with their possible references.
-///
-/// # Trait Implementations
-///
-/// To pick the conservative implementation,
-/// one must explicitly implement this marker trait `NotSelfReferencingVecItem`
-/// on the type to be contained in a `PinnedVec`.
-///
-/// On the other hand, they are already implemented for primitives for convenience
-/// such as numeric types, strings, etc.
-pub trait NotSelfRefVecItem {}
-
-// auto impl
-impl<T> NotSelfRefVecItem for &T where T: NotSelfRefVecItem {}
-impl<T> NotSelfRefVecItem for Option<T> where T: NotSelfRefVecItem {}
-
-impl NotSelfRefVecItem for bool {}
-impl NotSelfRefVecItem for char {}
-impl NotSelfRefVecItem for f32 {}
-impl NotSelfRefVecItem for f64 {}
-impl NotSelfRefVecItem for i128 {}
-impl NotSelfRefVecItem for i16 {}
-impl NotSelfRefVecItem for i32 {}
-impl NotSelfRefVecItem for i64 {}
-impl NotSelfRefVecItem for i8 {}
-impl NotSelfRefVecItem for isize {}
-impl NotSelfRefVecItem for NonZeroI128 {}
-impl NotSelfRefVecItem for NonZeroI16 {}
-impl NotSelfRefVecItem for NonZeroI32 {}
-impl NotSelfRefVecItem for NonZeroI64 {}
-impl NotSelfRefVecItem for NonZeroI8 {}
-impl NotSelfRefVecItem for NonZeroIsize {}
-impl NotSelfRefVecItem for NonZeroU128 {}
-impl NotSelfRefVecItem for NonZeroU16 {}
-impl NotSelfRefVecItem for NonZeroU32 {}
-impl NotSelfRefVecItem for NonZeroU64 {}
-impl NotSelfRefVecItem for NonZeroU8 {}
-impl NotSelfRefVecItem for NonZeroUsize {}
-impl NotSelfRefVecItem for str {}
-impl NotSelfRefVecItem for String {}
-impl NotSelfRefVecItem for u128 {}
-impl NotSelfRefVecItem for u16 {}
-impl NotSelfRefVecItem for u32 {}
-impl NotSelfRefVecItem for u64 {}
-impl NotSelfRefVecItem for u8 {}
-impl NotSelfRefVecItem for usize {}
+/// For instance, [LinkedList](https://crates.io/crates/orx-linked-list) implements
+/// methods `prev`, `next`, `prev_mut` and `next_mut`,
+/// and uses `set_prev` and `set_next` methods of `ImpVec` to safely define/maintain its
+/// internal references.
+pub trait SelfRefVecItem<'a> {
+    /// Reference to the previous element of this element;
+    /// None if this element is at the beginning.
+    fn prev(&self) -> Option<&'a Self> {
+        None
+    }
+    /// Reference to the next element of this element;
+    /// None if this element is at the end.
+    fn next(&self) -> Option<&'a Self> {
+        None
+    }
+    /// Mutable reference to the previous element of this element;
+    /// None if this element is at the beginning.
+    fn set_prev(&mut self, prev: Option<&'a Self>) {}
+    /// Mutable reference to the next element of this element;
+    /// None if this element is at the end.
+    fn set_next(&mut self, next: Option<&'a Self>) {}
+}

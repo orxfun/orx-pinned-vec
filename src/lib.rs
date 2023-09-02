@@ -67,10 +67,12 @@
     clippy::todo
 )]
 
+mod not_self_ref;
 mod pinned_vec;
 mod pinned_vec_simple;
 mod self_ref;
 
+pub use not_self_ref::NotSelfRefVecItem;
 pub use pinned_vec::PinnedVec;
 pub use pinned_vec_simple::PinnedVecSimple;
-pub use self_ref::NotSelfRefVecItem;
+pub use self_ref::SelfRefVecItem;
