@@ -1,7 +1,10 @@
-//! `PinnedVec` trait serves as the marker trait providing common vector functionalities
-//! for vector implementations which in addition
+//! `PinnedVec` trait provides common vector functionalities with additional promises
+//! to preserve the memory locations of vector elements; i.e., to keep elements pinned in memory.
 //!
-//! * preserves the memory locations of their elements; i.e., keeps them pinned.
+//! Furthermore, two disjoint traits for types to be included in a pinned vector are defined:
+//!
+//! * `SelfRefVecItem`, and
+//! * `NotSelfRefVecItem`.
 //!
 //! The goal of the pinned vector implementations is to make it convenient, efficient and safe
 //! to implement complex data structures child structures of which often hold references
@@ -51,9 +54,18 @@
 //! * `insert`
 //! * `remove`
 //! * `pop`
+//! * `swap`
+//! * `truncate`
 //!
 //! Since, pinned vectors will often contain items holding references to each other,
 //! default `clone` implementation is also `unsafe`.
+//!
+//! Note that these safety concerns are only relevant for vectors with reference holding elements.
+//! Therefore,
+//!
+//! * Every `PinnedVec` element types of which implement `NotSelfRefVecItem` automatically
+//! implement `PinnedVecSimple` trait;
+//! * and `PinnedVecSimple` trait provides safe calls to the unsafe methods listed above.
 
 #![warn(
     missing_docs,
