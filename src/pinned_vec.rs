@@ -19,6 +19,20 @@ use std::fmt::{Debug, Formatter, Result};
 /// The implementing struct must guarantee that pushing or extending the vector
 /// does not cause the memory locations of already added elements to change.
 pub trait PinnedVec<T> {
+    // pinned
+    /// Returns the index of the `element` with the given reference.
+    ///
+    /// Note that `T: Eq` is not required; reference equality is used.
+    ///
+    /// The complexity of this method depends on the particular `PinnedVec`
+    /// implementation; however, making use of referential equality,
+    /// it must be faster than *O(n)*, where n is the number of elements.
+    /// For the two main implementations, this method computes in:
+    /// * *O(1)* for [FixedVec](https://crates.io/crates/orx-fixed-vec);
+    /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f is the number of fragments.
+    fn index_of(&self, data: &T) -> Option<usize>;
+
+    // vec
     /// Clears the vector, removing all values.
     ///
     /// Note that this method has no effect on the allocated capacity of the vector.
@@ -77,7 +91,7 @@ pub trait PinnedVec<T> {
     /// Appends an element to the back of a collection.
     fn push(&mut self, value: T);
 
-    // unsafe
+    // vec but unsafe
     /// Inserts an element at position index within the vector, shifting all elements after it to the right.
     ///
     /// # Panics
