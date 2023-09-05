@@ -41,6 +41,7 @@ use std::num::*;
 /// as opposed to allocating each node separately in an arbitrary memory location.
 ///
 /// # Safety
+///
 /// On the other hand, such data structures require more care about safety and correctness.
 /// Since each vector element can hold a reference to another vector element,
 /// `mut` methods need to be investigated carefully.
