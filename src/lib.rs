@@ -83,6 +83,8 @@ mod not_self_ref;
 mod pinned_vec;
 mod pinned_vec_simple;
 mod self_ref;
+/// Utility functions to make PinnedVec implementations more convenient.
+pub mod utils;
 
 pub use not_self_ref::NotSelfRefVecItem;
 pub use pinned_vec::PinnedVec;
