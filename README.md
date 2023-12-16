@@ -1,6 +1,6 @@
 # orx-pinned-vec
 
-`PinnedVec` trait defines the interface for vectors which guarantee that the elements are pinned to their memory locations unless explicitly changed by the caller.
+`PinnedVec` trait defines the interface for vectors which guarantee that elements are pinned to their memory locations unless explicitly changed by the caller, with the aim to enable convenient self-referential collections.
 
 ## A. Implementations
 
@@ -112,10 +112,10 @@ How bad of a mutation is pushing an element to a vector? Priorly defined and pus
 There is actually one problem, aggregations. By pushing a new element to the vector:
 
 * we change its `len`,
-* we change the the average value of some numeric property of its elements,
+* we change the average value of some numeric property of its elements,
 * etc.
 
-If we rely on the values of these functions to remain unchanged without a `mut` reference, we would be wrong. Except for this, there does not seem to be a side effect. Therefore, such a `push` operation with an immutable reference fits well the builders or constructors, which is the goal we want to achieve.
+If we rely on the values of these functions to remain unchanged without a `mut` reference, we would be wrong. On the other hand, such a `push` operation with an immutable reference fits well the builders or constructors where we keep creating things rather than performing computations on the created ones. This is the goal we want to achieve here.
 
 ### C.1.b - Undefined Behavior
 
@@ -125,7 +125,7 @@ This is very critical. Therefore, we must make sure that `push` operation does <
 
 ### C.1.c - Building Acyclic Self-Referential Collections with Imp
 
-As the requirement is established, assume that our `Vec` provides us the immutable push method `fn imp(&self, element: T)`. Then, the following code would compile and allow us to build our tree.
+As the requirement is established, assume that our hypothetical `Vec` provides us the immutable push method `fn imp(&self, element: T)`. Then, the following code would compile and allow us to build our tree.
 
 ```rust ignore
 let tree = vec![];
@@ -150,16 +150,16 @@ When the collection has cyclic relations, such as regular trees where nodes have
 
 ### C.1.d - Relation with [ImpVec](https://crates.io/crates/orx-imp-vec)
 
-Note that `PinnedVec` does <ins>not</ins> provide the immutable push method.
+Note that `PinnedVec` does <ins>not</ins> provide the immutable push method. It only provides the required behavior.
 
-Instead, any `V` implementing `PinnedVec` can be wrapped by `ImpVec`. While wrapped, `ImpVec` safely allows the immutable push operation relying on the guarantees by the `PinnedVec`.
+Any `V` implementing `PinnedVec` can be wrapped by `ImpVec`. While wrapped, `ImpVec` safely allows the immutable push operation relying on the guarantees by the `PinnedVec`.
 
-This relation allows for a clear separation of the stages. For instance, one may
+This relation allows for a clear separation of the building stage. For instance, one may
 
 * create an empty `V: PinnedVec` (initiate)
 * wrap it in `ImpVec` (enter building phase)
 * build the self referential collection using the immutable push operation (build)
-* unwrap and get back the built data structure as `V` (leave the building phase)
+* unwrap the `ImpVec` and get back the built data structure as `V` (leave the building phase)
 
 ## C.2. Safety - Non-growing Mutations & Clone
 
