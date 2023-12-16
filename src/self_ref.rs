@@ -1,7 +1,7 @@
 #[allow(unused_variables)]
 
-/// A type to be contained in a `PinnedVec` which does hold a field
-/// which is a reference to a another element of the same vector.
+/// A type to be used as an element of a `PinnedVec` which holds a
+/// reference to a another element of the same vector.
 ///
 /// These data types are particularly useful for data types defining
 /// relations about its children such as trees or graphs.
@@ -17,11 +17,11 @@
 /// }
 /// ```
 ///
-/// Further assume that we want to keep nodes of all trees in the same vector.
+/// Further assume that we want to keep all nodes of the tree in the same vector.
 /// Compared to alternatives, this is helpful at least for the following reasons:
 ///
 /// * keeping all nodes together helps in achieving better cache locality,
-/// * the references defining the tree structure are thin rather than wide pointers,
+/// * the references defining the tree structure are thin rather than wide pointers (box-rc-free),
 /// * requires less heap allocations: only the vector is allocated together with all its elements,
 /// as opposed to allocating each node separately in an arbitrary memory location.
 ///
@@ -36,16 +36,18 @@
 /// resulting in the vector `[ x, a, b ]`.
 /// Now `a`'s parent appears to be itself (position 1);
 /// and `b`'s parent appears to be `x` (position 0).
-/// This is not an undefined behavior (UB) in the classical sense; however,
-/// it is certainly an UB in terms of the tree that the vector is supposed to represent.
+/// This is an undefined behavior (UB).
 ///
-/// Alternatively, if we call `remove(1)` on this vector, we end up with the vector `[ x ]`.
-/// Now `x` is pointing to a memory location that does not belong to this vector;
-/// we end up with a classical UB this time.
+/// Alternatively, if we call `remove(1)` on this vector, we end up with the vector `[ a ]`.
+/// Now `a` is pointing to a memory location that does not belong to this vector any more.
+/// We again end up with UB.
 ///
-/// Therefore, all mut methods which change positions of already existing elements
-/// (including removal of elements from the vector)
-/// are considered to be **`unsafe`** when `T` is not a `NotSelfRefVecItem`.
+/// We can conclude that all mut methods causing either of the following two lead to UB:
+///
+/// * change of positions of priorly pushed elements,
+/// * removal of elements from the vector.
+///
+/// Therefore these methods are marked as **unsafe**.
 ///
 /// # Safety - [ImpVec](https://crates.io/crates/orx-imp-vec)
 ///
