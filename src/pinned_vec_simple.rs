@@ -1,38 +1,31 @@
 use crate::{NotSelfRefVecItem, PinnedVec};
 
 /// `PinnedVecSimple` is a `PinnedVec` where the elements satisfy the trait bound
-/// `T: NotSelfRefVecItem.
+/// `T: NotSelfRefVecItem`.
 ///
-/// In other words, elements of the vector does not hold references to other
-/// elements of the same vector.
-/// Note that this is satisfied for all `std::vec::Vec`s.
+/// We never manually implement this trait. Instead:
 ///
-/// On the other hand, `PinnedVec` is designed to conveniently build more complex
-/// data structures while holding children of these data structures in a vec-like
-/// layout for better cache locality and to reduce heap allocations.
+/// * if `V` implements `PinnedVec<T>` for some `T` such that
+/// * `T` implements `NotSelfRefVecItem`
 ///
-/// These structures often contain child structures referencing each other;
-/// such as the `parent` or `children` relations of a tree.
-/// `PinnedVec` aims at guaranteeing that these internal references are kept valid.
-/// This makes methods `insert`, `remove` and `pop` unsafe.
+/// => then `V` auto-implements `PinnedVecSimple`.
 ///
-/// Since the aforementioned safety concern is absent when elements do not hold such internal references;
-/// i.e., when `T: NotSelfRefVecItem`,
-/// such vectors automatically implement `PinnedVecSimple` which enables safe calls
-/// to these methods.
+/// Therefore, `T: NotSelfRefVecItem` is sufficient to inform that the elements of the vector do not hold references to each other.
+/// This is critical as it enables the safe versions of the following methods which are otherwise unsafe:
 ///
-/// # Safety
+/// * `insert`
+/// * `remove`
+/// * `pop`
+/// * `swap`
+/// * `truncate`
+/// * `clone`
 ///
-/// Picking the more conservative and safer approach;
-/// the default versions of methods `insert`, `remove` and `pop` are unsafe.
+/// Note that having `NotSelfRefVecItem` elements is actually the usual in rust, as the opposite is challenging.
+/// Safely and conveniently enabling such rust-difficult data structures (linked lists, trees, graphs, etc)
+/// is exactly the goal of the `PinnedVec` trait and benefiting data structures such as the `orx_imp_vec::ImpVec`.
 ///
-/// In order to be able to make safe calls to these methods,
-/// once must explicitly implement `NotSelfRefVecItem` for the element type.
-/// This is a marker trait, and hence, easy to implement.
-///
-/// For convenience,
-/// this crate already contains implementations for the primitive structs
-/// such as numbers, string or bool.
+/// `NotSelfRefVecItem` is a marker trait which is implemented for most primitives; however, one needs to implement
+/// for new types to explicitly state that the type is <ins>not</ins> self-referential.
 pub trait PinnedVecSimple<T>: PinnedVec<T>
 where
     T: NotSelfRefVecItem,
@@ -126,7 +119,6 @@ where
     fn truncate(&mut self, len: usize) {
         unsafe { self.unsafe_truncate(len) }
     }
-
     #[inline(always)]
     fn clone(&self) -> Self
     where

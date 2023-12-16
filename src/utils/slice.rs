@@ -3,7 +3,7 @@
 ///
 /// # Safety
 ///
-/// The underlying memory of the slice &[T] stays pinned as long as
+/// The underlying memory of the slice `&[T]` stays pinned as long as
 /// the reference is in scope; i.e., is not carried to different memory locations.
 ///
 /// Therefore, it is possible and safe to compare an element's reference

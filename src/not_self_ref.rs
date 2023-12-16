@@ -1,10 +1,10 @@
 use std::num::*;
 
-/// Marker trait for types to be contained in a `PinnedVec` which do not hold a field
+/// Marker trait for types to be contained in a `PinnedVec` which do <ins>not</ins> hold a field
 /// which is a reference to a another element of the same vector.
 ///
 /// Note that any type which does not implement `NotSelfRefVecItem` marker trait
-/// is accepted to be a self-referencing-vector-item due to the following:
+/// is assumed to be a self-referencing-vector-item due to the following:
 ///
 /// * `PinnedVec` is particularly useful for defining complex data structures
 /// which elements of which often references each other;
@@ -46,22 +46,7 @@ use std::num::*;
 /// Since each vector element can hold a reference to another vector element,
 /// `mut` methods need to be investigated carefully.
 ///
-/// Consider for instance a vector of two nodes, say `a` and `b`,
-/// each has the other as the `parent`; i.e., defining a cyclic relationship `a <--> b`.
-/// Assume that we `insert` another node at the beginning of this vector, say `x`,
-/// resulting in the vector `[ x, a, b ]`.
-/// Now `a`'s parent appears to be itself (position 1);
-/// and `b`'s parent appears to be `x` (position 0).
-/// This is not an undefined behavior (UB) in the classical sense; however,
-/// it is certainly an UB in terms of the tree that the vector is supposed to represent.
-///
-/// Alternatively, if we call `remove(1)` on this vector, we end up with the vector `[ x ]`.
-/// Now `x` is pointing to a memory location that does not belong to this vector;
-/// we end up with a classical UB this time.
-///
-/// Therefore, all mut methods which change positions of already existing elements
-/// (including removal of elements from the vector)
-/// are considered to be **`unsafe`** when `T` is not a `NotSelfRefVecItem`.
+/// See [`SelfRefVecItem`](crate::self_ref::SelfRefVecItem) for details of the safety analysis.
 ///
 /// # Significance
 ///
@@ -70,39 +55,33 @@ use std::num::*;
 /// Whether the element type of a `PinnedVec` is `NotSelfRefVecItem` or not
 /// has an impact on the mutable operations which change positions of already pushed elements.
 ///
-/// The following is the complete list of these methods:
+/// The following is the list of these methods:
 ///
 /// * `insert`
 /// * `remove`
 /// * `pop`
+/// * `swap`
+/// * `truncate`
 /// * `clone`
 ///
 /// These methods can be called safely when `T: NotSelfRefVecItem`;
 /// only within an `unsafe` block otherwise.
 ///
-/// ## Safe methods regardless of `T` is a `NotSelfRefVecItem` or not
-///
-/// On the other hand, `mut` methods such as `push` or `extend_from_slice` are **safe**
-/// since a `PinnedVec` keeps positions of already pushed elements intact while growing.
-/// Therefore, references to already pushed elements will remain valid.
-///
-/// Although it leads to removal of elements,
-/// `clear` is also **safe** for all element types.
-/// This is because all elements are dropped together with their possible references.
-///
 /// # Trait Implementations
 ///
-/// To pick the conservative implementation,
-/// one must explicitly implement this marker trait `NotSelfReferencingVecItem`
-/// on the type to be contained in a `PinnedVec`.
-///
-/// On the other hand, they are already implemented for primitives for convenience
-/// such as numeric types, strings, etc.
+/// `NotSelfRefVecItem` is a marker trait which is implemented for most primitives; however, one needs to implement
+/// for new types to explicitly state that the type is <ins>not</ins> self-referential.
 pub trait NotSelfRefVecItem {}
 
 // auto impl
 impl<T> NotSelfRefVecItem for &T where T: NotSelfRefVecItem {}
 impl<T> NotSelfRefVecItem for Option<T> where T: NotSelfRefVecItem {}
+impl<T, E> NotSelfRefVecItem for Result<T, E>
+where
+    T: NotSelfRefVecItem,
+    E: NotSelfRefVecItem,
+{
+}
 
 impl NotSelfRefVecItem for bool {}
 impl NotSelfRefVecItem for char {}
