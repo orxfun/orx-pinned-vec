@@ -6,18 +6,18 @@
 
 A `PinnedVec` guarantees that positions of its elements are not changed implicitly. Note that `std::vec::Vec` does not satisfy this requirement.
 
- [`FixedVec`](https://crates.io/crates/orx-fixed-vec) and [`SplitVec`](https://crates.io/crates/orx-split-vec) are two example implementations.
+ [`SplitVec`](https://crates.io/crates/orx-split-vec) and [`FixedVec`](https://crates.io/crates/orx-fixed-vec) are two efficient implementations.
 
 ## B. Motivation
 
 There might be various situations where pinned elements are helpful.
 
 * It is somehow required for async code, following [blog](https://blog.cloudflare.com/pin-and-unpin-in-rust) could be useful for the interested.
-* It is a requirement to make self-referential types possible.
+* It is crucial in representing self-referential types with thin references.
 
-This crate focuses more on the latter. Particularly, it aims to make it safely and conveniently possible to build **self-referential collections** such as linked list, tree or graph.
+This crate focuses more on the latter. Particularly, it aims to make it safe and convenient to build **performant self-referential collections** such as linked lists, trees or graphs.
 
-As explained in rust-docs [here](https://doc.rust-lang.org/std/pin/index.html), there exists types `Pin` and `Unpin` for this very purpose. Through the theoretical discussions, one can easily agree on the safety. However, it is hard to consider the solution as a convenient one with all words `PhantomPinned`, `NonNull`, `dangling`, `Box::pin`, etc. which are alien to the self-referential data structures we are trying to build.
+As explained in rust-docs [here](https://doc.rust-lang.org/std/pin/index.html), there exist types `Pin` and `Unpin` for this very purpose. Through the theoretical discussions, one can easily agree on the safety. However, the solution is complicated with all words `PhantomPinned`, `NonNull`, `dangling`, `Box::pin`, etc. which are alien to the self-referential data structures we are trying to build.
 
 This crate suggests the following approach:
 
