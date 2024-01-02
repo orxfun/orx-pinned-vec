@@ -6,7 +6,7 @@
 
 A `PinnedVec` guarantees that positions of its elements are not changed implicitly. Note that `std::vec::Vec` does not satisfy this requirement.
 
- [`SplitVec`](https://crates.io/crates/orx-split-vec) and [`FixedVec`](https://crates.io/crates/orx-fixed-vec) are two efficient implementations.
+[`SplitVec`](https://crates.io/crates/orx-split-vec) and [`FixedVec`](https://crates.io/crates/orx-fixed-vec) are two efficient implementations.
 
 ## B. Motivation
 
@@ -25,8 +25,29 @@ This crate suggests the following approach:
 * Referencing each other will be through the natural `&` way rather than requiring any of the smart pointers.
 * In terms of convenience, building the collection will be close to building a regular vector.
 
+## C. Self-Referential-Collection Element Traits
 
-## C. Safety
+This crate also defines under the `orx_pinned_vec::self_referential_elements` module the required traits to enable building self referential collections with thin references.
+
+* `SelfRefNext` trait simply requires:
+  * `fn next(&self) -> Option<&'a Self>;` and
+  * `fn set_next(&mut self, next: Option<&'a Self>);` methods.
+
+`SelfRefPrev` is the previous counterpart.
+
+Notice that these two traits are sufficient to define a linked list. [`orx_linked_list::LinkedList`](https://crates.io/crates/orx-linked-list) implements `SelfRefPrev` and `SelfRefNext` to conveniently define a recurisve doubly linked list.
+
+Further, there exist multiple reference counterparts. They are useful in defining relations such as the *children* of a tree node or *heads of outgoing arcs* from a graph node, etc. There exist *vec* variants to be used for holding variable number of references. However, there also exist constant sized array versions which are useful in structures such as binary search trees where the number of references is bounded by a const.
+
+The table below presents the complete list of traits which suffice to define all aforementioned relations:
+
+|                                             | prev           | next           |
+|---------------------------------------------|----------------|----------------|
+| single reference                            | SelfRefPrev    | SelfRefNext    |
+| dynamic number of references                | SelfRefPrevVec | SelfRefNextVec |
+| multiple elements with a `const` max-length | SelfRefPrevArr | SelfRefNextArr |
+
+## D. Safety
 
 In order to safely build a self-referential collection, we have two requirements
 
@@ -65,7 +86,7 @@ Finally, assume the tree we are trying to build is:
 ```
 
 
-## C.1. Safety - Immutable Push
+## D.1. Safety - Immutable Push
 
 We need to be able to push to the vector with an immutable reference. It might (will) sound counter-intuitive. We will first discuss why it is necessary and then why it is okay (opinionated).
 
@@ -161,7 +182,7 @@ This relation allows for a clear separation of the building stage. For instance,
 * build the self referential collection using the immutable push operation (build)
 * unwrap the `ImpVec` and get back the built data structure as `V` (leave the building phase)
 
-## C.2. Safety - Non-growing Mutations & Clone
+## D.2. Safety - Non-growing Mutations & Clone
 
 With self referential collections, some other mutating methods can lead to critical problems as well. These are the methods which change positions of already pushed elements or remove elements from the vector:
 

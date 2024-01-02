@@ -61,6 +61,11 @@ pub trait PinnedVec<T> {
     where
         T: 'a,
         Self: 'a;
+    /// Iterator yielding mutable references to the elements of the vector.
+    type IterMut<'a>: Iterator<Item = &'a mut T>
+    where
+        T: 'a,
+        Self: 'a;
 
     // pinned
     /// Returns the index of the `element` with the given reference.
@@ -260,6 +265,8 @@ pub trait PinnedVec<T> {
 
     /// Returns an iterator to elements of the vector.
     fn iter(&self) -> Self::Iter<'_>;
+    /// Returns an iterator of mutable references to elements of the vector.
+    fn iter_mut(&mut self) -> Self::IterMut<'_>;
 
     // required for common trait implementations
     /// This method tests for `self` and `other` values to be equal, and is used by `==`.
