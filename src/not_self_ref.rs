@@ -46,8 +46,6 @@ use std::num::*;
 /// Since each vector element can hold a reference to another vector element,
 /// `mut` methods need to be investigated carefully.
 ///
-/// See [`SelfRefVecItem`](crate::self_ref::SelfRefVecItem) for details of the safety analysis.
-///
 /// # Significance
 ///
 /// ## Unsafe methods when `T` is not a `NotSelfRefVecItem`
