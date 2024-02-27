@@ -1,60 +1,28 @@
-use std::fmt::{Debug, Formatter, Result};
-
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
 /// => memory location of an element already pushed to the collection never changes unless any of the following mut-methods is called:
+/// * `remove`, `pop`,
+/// * `insert`,
+/// * `clear`, `truncate`.
 ///
-/// * `clear`, `resize`, `truncate`,
-/// * `insert`
-/// * `remove`, `pop`.
+/// In other words,
 ///
-/// Equivalently:
+/// => the mut-methods `push` or `extend_from_slice` do <ins>not</ins> change memory locations of already added elements.
 ///
-/// => the mut-methods `push` or `extend_from_slice` do <ins>not</ins> change memory locations of priorly added elements.
+/// # Pinned Elements Guarantee
 ///
-/// This pinned property is crticial and required for building collections such as [`orx-imp-vec::ImpVec`](https://crates.io/crates/orx-imp-vec).
+/// A `PinnedVec` guarantees that positions of its elements **do not change implicitly**.
 ///
-/// # Safety: Pinned Elements
+/// To be specific, let's assume that a pinned vector currently has `n` elements:
 ///
-/// Note that, together with `PinnedVecSimple`, this trait defines the required signature for implementing pinned vectors.
-/// However, the implementor struct is responsible for guaranteeing that `push` and `extend_from_slice` do not change memory locations
-/// of already added elements.
-///
-/// As expected, `push` and `extend_from_slice` are mut-methods. However, when the `PinnedVec` with pinned guarantees is
-/// wrapped in an `ImpVec`, these methods require only `&self` allowing to safely and conveniently represent complex-for-rust
-/// data structures.
-///
-/// # Safety: Self Referential Vectors
-///
-/// One of the two main goals of the target `ImpVec` is to make it safe and convenient to build self-referential data structures,
-/// such as linked lists or trees. Elements of the vector being self-referential or not has a critical impact on safety of the
-/// mut-methods.
-///
-/// *The arguments below are based on the possibility of self-referential vectors where elements can hold references to each other.
-/// This is not common in rust; however, it is safely possible with data structures such as `ImpVec`.*
-///
-/// For instance, as expected `insert` is a safe method if the elements of the vector do not hold references to each other. However,
-/// if they do, since `insert` will change memory locations of existing elements, this operation is `unsafe`.
-///
-/// Therefore, the distinction is provided by the trait `NotSelfRefVecItem`.
-///
-/// For `PinnedVec<T>`
-/// * all mut-methods which change the memory locations of existing items such as `insert`, `remove` and `swap` are `unsafe`
-/// since this would invalidate the references held by other elements,
-/// * all mut-methods which remove elements from the vector such as `pop`, `truncate` or `remove` are `unsafe`
-/// since there might be elements holding a reference to the removed items,
-///   * with the exception that `clear` is safe since all elements are gone at once,
-/// * additionally `clone` is `unsafe` because the cloned elements would be holding references to the original vector.
-///
-/// However, all these methods become safe if `T: NotSelfRefVecItem` through the type system as follows:
-///
-/// * every `V: PinnedVec<T>` also automatically implements `PinnedVecSimple<V>`,
-/// * and `PinnedVecSimple<V>` provides safe versions of the above mentioned methods.
-///
-/// This makes sense since all the mentioned unsafety stems from the possibility of elements holding references to each other.
-///
-/// Note that `NotSelfRefVecItem` is a marker trait which means that the implementor takes the responsibility.
-/// Further, it is implemented for most primitive types.
+/// | Method    | Expected Behavior |
+/// | -------- | ------- |
+/// | `push(new_element)` | does not change the memory locations of the `n` elements |
+/// | `extend_from_slice(slice)` | does not change the memory locations of the first `n` elements |
+/// | `insert(a, new_element)` | does not change the memory locations of the first `a` elements, where `a <= n`; elements to the right of the inserted element might be changed, commonly shifted to right |
+/// | `pop()` | does not change the memory locations of the first `n-1` elements, the `n`-th element is removed |
+/// | `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
+/// | `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
 pub trait PinnedVec<T> {
     /// Iterator yielding references to the elements of the vector.
     type Iter<'a>: Iterator<Item = &'a T>
@@ -63,6 +31,16 @@ pub trait PinnedVec<T> {
         Self: 'a;
     /// Iterator yielding mutable references to the elements of the vector.
     type IterMut<'a>: Iterator<Item = &'a mut T>
+    where
+        T: 'a,
+        Self: 'a;
+    /// Iterator yielding references to the elements of the vector.
+    type IterRev<'a>: Iterator<Item = &'a T>
+    where
+        T: 'a,
+        Self: 'a;
+    /// Iterator yielding mutable references to the elements of the vector.
+    type IterMutRev<'a>: Iterator<Item = &'a mut T>
     where
         T: 'a,
         Self: 'a;
@@ -127,8 +105,32 @@ pub trait PinnedVec<T> {
     /// even if the resulting reference is not used.
     unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T;
 
+    /// Returns a reference to the first element of the vector; returns None if the vector is empty.
+    fn first(&self) -> Option<&T>;
+    /// Returns a reference to the last element of the vector; returns None if the vector is empty.
+    fn last(&self) -> Option<&T>;
+
+    /// Returns a reference to the first element of the vector without bounds checking.
+    ///
+    /// For a safe alternative see `first`.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method when the vector is empty is *[undefined behavior]* even if the resulting reference is not used.
+    unsafe fn first_unchecked(&self) -> &T;
+    /// Returns a reference to the last element of the vector without bounds checking.
+    ///
+    /// For a safe alternative see `last`.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method when the vector is empty is *[undefined behavior]* even if the resulting reference is not used.
+    unsafe fn last_unchecked(&self) -> &T;
+
     /// Returns true if the vector contains no elements.
-    fn is_empty(&self) -> bool;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     /// Returns the number of elements in the vector, also referred to as its length.
     fn len(&self) -> usize;
     /// Appends an element to the back of a collection.
@@ -139,59 +141,15 @@ pub trait PinnedVec<T> {
     ///
     /// # Panics
     /// Panics if `index >= len`.
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
-    ///
-    /// `insert` is unsafe since insertion of a new element at an arbitrary position of the vector
-    /// changes the positions or memory locations of already existing elements.
-    /// This is considered **unsafe** since it violates `PinnedVec` guarantees.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_insert(&mut self, index: usize, element: T);
+    fn insert(&mut self, index: usize, element: T);
     /// Removes and returns the element at position index within the vector, shifting all elements after it to the left.
     ///
     /// # Panics
     ///
     /// Panics if index is out of bounds.
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is <ins>not</ins> `NotSelfRefVecItem`.
-    ///
-    /// `remove` is unsafe since removal of an element at an arbitrary position of the vector
-    /// changes the positions of already existing elements.
-    /// This is considered **unsafe** since it violates `PinnedVec` guarantees.
-    ///
-    /// Further, it is possible that one of the remaining elements is
-    /// pointing to the element which is being removed.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_remove(&mut self, index: usize) -> T;
+    fn remove(&mut self, index: usize) -> T;
     /// Removes the last element from a vector and returns it, or None if it is empty.
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
-    ///
-    /// `pop` is unsafe since it is possible that one of the remaining elements is holding a
-    /// reference to the last element which is being popped.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_pop(&mut self) -> Option<T>;
+    fn pop(&mut self) -> Option<T>;
     /// Swaps two elements in the slice.
     ///
     /// If `a` equals to `b`, it's guaranteed that elements won't change value.
@@ -199,83 +157,42 @@ pub trait PinnedVec<T> {
     /// # Arguments
     ///
     /// * a - The index of the first element
-    /// * b - The index of the second element
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
-    ///
-    /// `swap` is unsafe since it is possible that other elements are referencing the
-    /// elements to be swapped. The swap operation would invalidate these references,
-    /// pointing at wrong elements.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_swap(&mut self, a: usize, b: usize);
+    /// * b - The index of the second element.
+    fn swap(&mut self, a: usize, b: usize);
     /// Shortens the vector, keeping the first `len` elements and dropping
     /// the rest.
     ///
     /// If `len` is greater than the vector's current length, this has no
     /// effect.
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
-    ///
-    /// `truncate` is unsafe since it is possible that remaining elements are referencing
-    /// to elements which are dropped by the truncate method.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_truncate(&mut self, len: usize);
-    /// Creates and returns a clone of the vector.
-    ///
-    /// # Safety
-    ///
-    /// This operation is **unsafe** when `T` is not `NotSelfRefVecItem`.
-    ///
-    /// To understand why `clone` is unsafe when `T` is not `NotSelfRefVecItem`,
-    /// consider the following example.
-    ///
-    /// ```rust ignore
-    /// let vec = ...;  // vec is a self-referential PinnedVec, equivalently,
-    ///                 // it is a `PinnedVec<T>` where T is not `NotSelfRefVecItem`
-    /// let clone = vec.clone();
-    /// ```
-    ///
-    /// Now the elements of `clone` are holding references to the `vec` which is bad!
-    ///
-    /// * these references are meant to be kept internal to the vector, so is the name self-ref,
-    /// * further, if `vec` is dropped, `clone` elements will be holding invalid references leading to UB.
-    ///
-    /// `PinnedVec` takes the conservative approach:
-    /// every T which does <ins>not</ins> implement the marker trait `NotSelfRefVecItem`
-    /// is assumed to be a vector item referencing other vector items.
-    ///
-    /// On the other hand, safe version of this method is available for `T: NotSelfRefVecItem`.
-    unsafe fn unsafe_clone(&self) -> Self
-    where
-        T: Clone;
+    fn truncate(&mut self, len: usize);
 
     /// Returns an iterator to elements of the vector.
     fn iter(&self) -> Self::Iter<'_>;
     /// Returns an iterator of mutable references to elements of the vector.
     fn iter_mut(&mut self) -> Self::IterMut<'_>;
+    /// Returns a reversed back-to-front iterator to elements of the vector.
+    fn iter_rev(&self) -> Self::IterRev<'_>;
+    /// Returns a reversed back-to-front iterator mutable references to elements of the vector.
+    fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_>;
+}
 
-    // required for common trait implementations
-    /// This method tests for `self` and `other` values to be equal, and is used by `==`.
-    fn partial_eq<S>(&self, other: S) -> bool
-    where
-        S: AsRef<[T]>,
-        T: PartialEq;
-    /// Formats the value using the given formatter.
-    fn debug(&self, f: &mut Formatter<'_>) -> Result
-    where
-        T: Debug;
+#[cfg(test)]
+mod tests {
+    use crate::{pinned_vec_tests::testvec::TestVec, PinnedVec};
+
+    #[test]
+    fn is_empty() {
+        let mut vec = TestVec::new(5);
+        assert!(vec.is_empty());
+
+        vec.push(1);
+        assert!(!vec.is_empty());
+
+        vec.push(2);
+        vec.push(3);
+        assert!(!vec.is_empty());
+
+        vec.clear();
+        assert!(vec.is_empty());
+    }
 }

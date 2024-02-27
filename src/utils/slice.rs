@@ -27,3 +27,31 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    pub use super::*;
+
+    #[test]
+    fn index_of_wrong() {
+        let array1 = [0, 1, 2, 3];
+        let array2 = [0, 1, 2];
+
+        let index1 = index_of(&array1, &array2[0]);
+        assert!(index1.is_none());
+
+        let index2 = index_of(&array2, &array1[0]);
+        assert!(index2.is_none());
+    }
+
+    #[test]
+    fn index_of_some() {
+        let array = [0, 1, 2, 3];
+
+        for i in 0..array.len() {
+            let element = &array[i];
+            let index = index_of(&array, element);
+            assert_eq!(Some(i), index);
+        }
+    }
+}

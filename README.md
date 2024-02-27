@@ -1,81 +1,49 @@
 # orx-pinned-vec
 
-`PinnedVec` trait defines the interface for vectors which guarantee that elements are pinned to their memory locations with the aim to enable convenient self-referential collections.
+`PinnedVec` trait defines the interface for vectors which guarantee that elements added to the vector are pinned to their memory locations unless explicitly changed.
 
-## A. Implementations
+## A. Pinned Elements Guarantee
 
-A `PinnedVec` guarantees that positions of its elements are not changed implicitly. Note that `std::vec::Vec` does not satisfy this requirement.
+A `PinnedVec` guarantees that positions of its elements **do not change implicitly**.
 
-[`SplitVec`](https://crates.io/crates/orx-split-vec) and [`FixedVec`](https://crates.io/crates/orx-fixed-vec) are two efficient implementations.
+To be specific, let's assume that a pinned vector currently has `n` elements:
+
+| Method    | Expected Behavior |
+| -------- | ------- |
+| `push(new_element)` | does not change the memory locations of the `n` elements |
+| `extend_from_slice(slice)` | does not change the memory locations of the first `n` elements |
+| `insert(a, new_element)` | does not change the memory locations of the first `a` elements, where `a <= n`; elements to the right of the inserted element might be changed, commonly shifted to right |
+| `pop()` | does not change the memory locations of the first `n-1` elements, the `n`-th element is removed |
+| `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
+| `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
+
+`PinnedVec` trait on its own cannot provide the pinned element guarantee; hence, it could be considered as a marker trait.
+
+However, this crate additionally provides the test function to assert these guarantees:
+
+```rust ignore
+pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) {
+    // ...
+}
+```
+
+This function performs an extensive test on the specific implementation `P` and fails if any of the above guarantees is not provided.
+
+Note that `std::vec::Vec` does not provide the pinned elements during growth guarantee. You may find a wrapper struct `JustVec` which is nothing but the standard vec here: [src/pinned_vec_tests/test_all.rs](https://github.com/orxfun/orx-pinned-vec/blob/main/src/pinned_vec_tests/test_all.rs). As expected, `test_pinned_vec` method fails for this struct.
 
 ## B. Motivation
 
-There might be various situations where pinned elements are helpful.
+There are various situations where pinned elements are necessary.
 
-* It is somehow required for async code, following [blog](https://blog.cloudflare.com/pin-and-unpin-in-rust) could be useful for the interested.
-* It is crucial in representing self-referential types with thin references.
+* It is critical in enabling **efficient, convenient and safe self-referential collections** with thin references, see [`SelfRefCol`](https://crates.io/crates/orx-self-ref-col) for details.
+* It is essential in allowing an **immutable push** vector; i.e., [`ImpVec`](https://crates.io/crates/orx-imp-vec). This is a very useful operation when the desired collection is a bag or a container of things, rather than having a collective meaning. In such cases, `ImpVec` avoids heap allocations and wide pointers such as `Box` or `Rc` or etc.
+* It is important for **async** code; following [blog](https://blog.cloudflare.com/pin-and-unpin-in-rust) could be useful for the interested.
 
-This crate focuses on the latter. Particularly, it aims to make it safe and convenient to build **performant self-referential collections** such as linked lists, trees or graphs.
+*As explained in [rust-docs](https://doc.rust-lang.org/std/pin/index.html), there exist `Pin` and `Unpin` types for similar purposes. However, the solution is complicated and low level using `PhantomPinned`, `NonNull`, `dangling`, `Box::pin`, pointer accesses, etc.*
 
-As explained in rust-docs [here](https://doc.rust-lang.org/std/pin/index.html), there exist types `Pin` and `Unpin` for this very purpose. Through the theoretical discussions, one can easily agree on the safety. However, the solution is complicated with all words `PhantomPinned`, `NonNull`, `dangling`, `Box::pin`, etc. which are alien to the self-referential data structures we are trying to build.
+## C. Implementations
 
-This crate suggests the following approach:
-
-* Instances of the self-referential type will be collected together in a vector.
-* Referencing each other will be through the natural `&` way rather than requiring any of the smart pointers.
-* In terms of convenience, building the collection will be close to building a regular vector.
-
-## C. Self-Referential-Collection Element Traits
-
-This crate also defines under the `orx_pinned_vec::self_referential_elements` module the required traits to enable building self referential collections with thin references.
-
-* `SelfRefNext` trait simply requires:
-  * `fn next(&self) -> Option<&'a Self>;` and
-  * `fn set_next(&mut self, next: Option<&'a Self>);` methods.
-
-`SelfRefPrev` is the previous counterpart.
-
-Notice that these two traits are sufficient to define a linked list. [`orx_linked_list::LinkedList`](https://crates.io/crates/orx-linked-list) implements `SelfRefPrev` and `SelfRefNext` to conveniently define a recurisve doubly linked list.
-
-Further, there exist multiple reference counterparts. They are useful in defining relations such as the *children* of a tree node or *heads of outgoing arcs* from a graph node, etc. There exist *vec* variants to be used for holding variable number of references. However, there also exist constant sized array versions which are useful in structures such as binary search trees where the number of references is bounded by a const.
-
-The table below presents the complete list of traits which suffice to define all aforementioned relations:
-
-|                                             | prev           | next           |
-|---------------------------------------------|----------------|----------------|
-| single reference                            | SelfRefPrev    | SelfRefNext    |
-| dynamic number of references                | SelfRefPrevVec | SelfRefNextVec |
-| multiple elements with a `const` max-length | SelfRefPrevArr | SelfRefNextArr |
-
-## D. Safety
-
-With self referential collections, some mutating methods can lead to critical problems. These are the methods which change positions of already pushed elements or remove elements from the vector:
-
-* `insert`
-* `remove`
-* `pop`
-* `swap`
-* `truncate`
-
-These methods can invalidate the references among elements. Therefore, `PinnedVec` defines them as **unsafe**. One exception is the `clear` method which is safe since all elements are removed together with their references at once.
-
-In addition, `clone` method as well is **unsafe**, since the elements of the clone would be referencing the elements of the original vector.
-
-These are due to the fact that, naive implementations would cause false references. This does not mean that it is not possible to provide a safe implementation. Instead, it means that each data structure would need a different implementation (insert method of a tree and that of a linked-list cannot be implemented in the same way, they will need to update references differently).
-
-Implementors can provide careful safe implementations, such as `orx_linked_list::LinkedList` safely implement `Clone`, although it uses any `PinnedVec` as the underlying storage.
-
-There are a few cases other than self referencing collections, where a `PinnedVec` is useful. And there is no reason to treat these methods as unsafe if the elements are not referencing each other. For this purpose, `NotSelfRefVecItem` marker trait is defined. This trait works as follows:
-
-* if `V` implements `PinnedVec<T>`, and
-* if `T` implements the marker trait `NotSelfRefVecItem`,
-* => then, `V` also implements `PinnedVecSimple<T>` which provides the safe versions of the abovementioned methods.
-
-`NotSelfRefVecItem` trait is implemented for most primitives; however, one needs to implement for new types to explicitly state that the type is <ins>not</ins> self-referential.
-
-## E. Relation with the `ImpVec`
-
-Providing pinned memory location elements with `PinnedVec` is the first block for building self referential structures; the second building block is the [`ImpVec`](https://crates.io/crates/orx-imp-vec). An `ImpVec` wraps any `PinnedVec` implementation and provides specialized methods built on the pinned element guarantee in order to allow building self referential collections.
+[`SplitVec`](https://crates.io/crates/orx-split-vec) and [`FixedVec`](https://crates.io/crates/orx-fixed-vec) are two efficient implementations.
 
 ## License
 
