@@ -24,6 +24,10 @@ impl<T> PinnedVec<T> for TestVec<T> {
         crate::utils::slice::index_of(&self.0, data)
     }
 
+    fn contains_reference(&self, element: &T) -> bool {
+        self.index_of(element).is_some()
+    }
+
     fn clear(&mut self) {
         self.0.clear();
     }

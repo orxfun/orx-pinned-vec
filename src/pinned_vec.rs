@@ -51,13 +51,27 @@ pub trait PinnedVec<T> {
     /// Note that `T: Eq` is not required; reference equality is used.
     ///
     /// The complexity of this method depends on the particular `PinnedVec` implementation.
-    /// However, making use of referential equality, it ispossible to perform much better than *O(n)*,
+    /// However, making use of referential equality, it possible to perform much better than *O(n)*,
     /// where n is the vector length.
     ///
     /// For the two example implementations, complexity of this method:
     /// * *O(1)* for [FixedVec](https://crates.io/crates/orx-fixed-vec);
     /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
-    fn index_of(&self, data: &T) -> Option<usize>;
+    fn index_of(&self, element: &T) -> Option<usize>;
+
+    /// Returns whether or not of the `element` with the given reference belongs to this vector.
+    /// In other words, returns whether or not the reference to the `element` is valid.
+    ///
+    /// Note that `T: Eq` is not required; memory address is used.
+    ///
+    /// The complexity of this method depends on the particular `PinnedVec` implementation.
+    /// However, making use of pinned element guarantees, it possible to perform much better than *O(n)*,
+    /// where n is the vector length.
+    ///
+    /// For the two example implementations, complexity of this method:
+    /// * *O(1)* for [FixedVec](https://crates.io/crates/orx-fixed-vec);
+    /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
+    fn contains_reference(&self, element: &T) -> bool;
 
     // vec
     /// Clears the vector, removing all values.

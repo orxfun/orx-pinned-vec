@@ -20,17 +20,24 @@ impl DerefMut for RefMap {
 
 impl RefMap {
     pub fn new(max_num_indices: usize, max_len: usize) -> Self {
-        use rand::prelude::*;
-        let mut map = std::collections::HashMap::new();
-        if max_len > 0 {
-            let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(171217);
-
-            for _ in 0..max_num_indices {
-                let i = rng.gen_range(0..max_len);
-                map.entry(i).or_insert(None);
-            }
+        fn random_index(i: usize, max_len: usize) -> usize {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            let nanos = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("failed to create random index")
+                .subsec_nanos() as usize
+                + i;
+            nanos % max_len
         }
 
+        let mut map = std::collections::HashMap::new();
+        if max_len > 0 {
+            for i in 0..max_num_indices {
+                let idx = random_index(i, max_len);
+                dbg!(idx);
+                map.entry(idx).or_insert(None);
+            }
+        }
         Self(map)
     }
 
@@ -68,9 +75,8 @@ impl RefMap {
 
 #[cfg(test)]
 mod tests {
-    use crate::pinned_vec_tests::testvec::TestVec;
-
     use super::*;
+    use crate::pinned_vec_tests::testvec::TestVec;
 
     #[test]
     fn deref() {
