@@ -8,7 +8,3 @@ license = "MIT"
 repository = "https://github.com/orxfun/orx-pinned-vec/"
 keywords = ["vec", "array", "vector", "pinned", "memory"]
 categories = ["data-structures", "rust-patterns"]
-
-[dependencies]
-rand = "0.8.5"
-rand_chacha = "0.3.1"
