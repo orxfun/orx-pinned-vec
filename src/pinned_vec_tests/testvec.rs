@@ -121,4 +121,8 @@ impl<T> PinnedVec<T> for TestVec<T> {
     fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_> {
         self.0.iter_mut().rev()
     }
+
+    unsafe fn set_len(&mut self, new_len: usize) {
+        self.0.set_len(new_len)
+    }
 }
