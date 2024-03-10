@@ -188,6 +188,16 @@ pub trait PinnedVec<T> {
     fn iter_rev(&self) -> Self::IterRev<'_>;
     /// Returns a reversed back-to-front iterator mutable references to elements of the vector.
     fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_>;
+
+    /// Forces the length of the vector to `new_len`.
+    ///
+    /// This is a low-level operation that maintains none of the normal invariants of the type.
+    ///
+    /// # Safety
+    ///
+    /// - `new_len` must be less than or equal to [`capacity()`].
+    /// - The elements at `old_len..new_len` must be initialized.
+    unsafe fn set_len(&mut self, new_len: usize);
 }
 
 #[cfg(test)]
