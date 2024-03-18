@@ -34,7 +34,6 @@ impl RefMap {
         if max_len > 0 {
             for i in 0..max_num_indices {
                 let idx = random_index(i, max_len);
-                dbg!(idx);
                 map.entry(idx).or_insert(None);
             }
         }

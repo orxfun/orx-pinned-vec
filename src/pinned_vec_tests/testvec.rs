@@ -122,6 +122,14 @@ impl<T> PinnedVec<T> for TestVec<T> {
         self.0.iter_mut().rev()
     }
 
+    unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T> {
+        if index < self.0.capacity() {
+            Some(self.0.as_mut_ptr().add(index))
+        } else {
+            None
+        }
+    }
+
     unsafe fn set_len(&mut self, new_len: usize) {
         self.0.set_len(new_len)
     }

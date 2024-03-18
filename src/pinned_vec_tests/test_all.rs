@@ -16,13 +16,15 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
     let pinned_vec = super::insert::insert(pinned_vec, test_vec_len);
     let pinned_vec = super::pop::pop(pinned_vec, test_vec_len);
     let pinned_vec = super::remove::remove(pinned_vec, test_vec_len);
-    let _ = super::truncate::truncate(pinned_vec, test_vec_len);
+    let pinned_vec = super::truncate::truncate(pinned_vec, test_vec_len);
+    let _ = super::unsafe_writer::unsafe_writer(pinned_vec, test_vec_len);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
     impl<T> PinnedVec<T> for JustVec<T> {
         type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
@@ -127,6 +129,14 @@ mod tests {
 
         fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_> {
             self.0.iter_mut().rev()
+        }
+
+        unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T> {
+            if index < self.0.capacity() {
+                Some(self.0.as_mut_ptr().add(index))
+            } else {
+                None
+            }
         }
 
         unsafe fn set_len(&mut self, new_len: usize) {

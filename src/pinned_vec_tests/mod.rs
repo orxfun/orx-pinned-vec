@@ -8,3 +8,4 @@ pub mod test_all;
 #[cfg(test)]
 pub(crate) mod testvec;
 mod truncate;
+mod unsafe_writer;
