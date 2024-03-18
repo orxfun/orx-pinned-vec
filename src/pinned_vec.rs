@@ -189,6 +189,16 @@ pub trait PinnedVec<T> {
     /// Returns a reversed back-to-front iterator mutable references to elements of the vector.
     fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_>;
 
+    /// Returns a mutable reference to the `index`-th element of the vector.
+    ///
+    /// Returns `None` if `index`-th position does not belong to the vector; i.e., if `index` is out of `capacity`.
+    ///
+    /// # Safety
+    ///
+    /// This method allows to write to a memory which is greater than the vector's length.
+    /// On the other hand, it will never return a pointer to a memory location that the vector does not own.
+    unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T>;
+
     /// Forces the length of the vector to `new_len`.
     ///
     /// This is a low-level operation that maintains none of the normal invariants of the type.
