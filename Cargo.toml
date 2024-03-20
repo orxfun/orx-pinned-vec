@@ -1,6 +1,6 @@
 [package]
 name = "orx-pinned-vec"
-version = "2.3.0"
+version = "2.4.0"
 edition = "2021"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "`PinnedVec` trait defines the interface for vectors which guarantee that elements added to the vector are pinned to their memory locations unless explicitly changed."

@@ -1,4 +1,4 @@
-use crate::PinnedVec;
+use crate::*;
 use std::iter::Rev;
 
 pub struct TestVec<T>(Vec<T>);
@@ -132,5 +132,9 @@ impl<T> PinnedVec<T> for TestVec<T> {
 
     unsafe fn set_len(&mut self, new_len: usize) {
         self.0.set_len(new_len)
+    }
+
+    fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
+        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
     }
 }

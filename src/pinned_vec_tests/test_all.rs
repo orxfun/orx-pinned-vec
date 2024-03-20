@@ -22,6 +22,8 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 
 #[cfg(test)]
 mod tests {
+    use crate::PinnedVecGrowthError;
+
     use super::*;
 
     #[derive(Debug)]
@@ -141,6 +143,10 @@ mod tests {
 
         unsafe fn set_len(&mut self, new_len: usize) {
             self.0.set_len(new_len)
+        }
+
+        fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
+            Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
     }
 
