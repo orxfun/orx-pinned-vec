@@ -64,10 +64,12 @@
     clippy::todo
 )]
 
+mod errors;
 mod pinned_vec;
 mod pinned_vec_tests;
 /// Utility functions to make PinnedVec implementations more convenient.
 pub mod utils;
 
+pub use errors::PinnedVecGrowthError;
 pub use pinned_vec::PinnedVec;
 pub use pinned_vec_tests::test_all::test_pinned_vec;

@@ -1,3 +1,5 @@
+use crate::errors::PinnedVecGrowthError;
+
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
 /// => memory location of an element already pushed to the collection never changes unless any of the following mut-methods is called:
@@ -208,6 +210,14 @@ pub trait PinnedVec<T> {
     /// - `new_len` must be less than or equal to `capacity()`.
     /// - The elements at `old_len..new_len` must be initialized.
     unsafe fn set_len(&mut self, new_len: usize);
+
+    /// Attempts to increase the capacity of the pinned vector with default additional amount defined by the specific implementation.
+    ///
+    /// The method:
+    /// * ensures that all already allocated elements stay pinned their memory locations,
+    /// * and returns the new capacity which is greater than or equal to the current capacity if the operation succeeds,
+    /// * corresponding `Err` if it fails.
+    fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError>;
 }
 
 #[cfg(test)]
