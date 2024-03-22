@@ -137,4 +137,8 @@ impl<T> PinnedVec<T> for TestVec<T> {
     fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
         Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
     }
+
+    unsafe fn grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
+        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
+    }
 }
