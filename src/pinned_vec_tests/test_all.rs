@@ -22,9 +22,9 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 
 #[cfg(test)]
 mod tests {
-    use crate::PinnedVecGrowthError;
 
     use super::*;
+    use crate::PinnedVecGrowthError;
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
@@ -146,6 +146,10 @@ mod tests {
         }
 
         fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
+            Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
+        }
+
+        unsafe fn grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
             Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
     }

@@ -218,6 +218,18 @@ pub trait PinnedVec<T> {
     /// * and returns the new capacity which is greater than or equal to the current capacity if the operation succeeds,
     /// * corresponding `Err` if it fails.
     fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError>;
+
+    /// Increases the capacity of the vector at least up to the `new_capacity`:
+    /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
+    /// * increases the capacity to `x >= new_capacity` otherwise if the operation succeeds.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe due to the internal guarantees of pinned vectors.
+    /// * A `SplitVec`, on the other hand, can grow to the `new_capacity` without any problem.
+    /// However, it is not designed to have intermediate empty fragments, while `grow_to` can leave such fragments.
+    /// Hence, the caller is responsible for handling this.
+    unsafe fn grow_to(&mut self, new_capacity: usize) -> Result<usize, PinnedVecGrowthError>;
 }
 
 #[cfg(test)]
