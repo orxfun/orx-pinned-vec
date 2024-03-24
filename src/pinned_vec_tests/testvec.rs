@@ -36,6 +36,10 @@ impl<T> PinnedVec<T> for TestVec<T> {
         self.0.capacity()
     }
 
+    fn capacity_state(&self) -> CapacityState {
+        CapacityState::FixedCapacity(self.capacity())
+    }
+
     fn extend_from_slice(&mut self, other: &[T])
     where
         T: Clone,
@@ -139,6 +143,10 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     unsafe fn grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
+        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
+    }
+
+    unsafe fn concurrently_grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
         Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
     }
 }

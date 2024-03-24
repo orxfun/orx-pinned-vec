@@ -24,7 +24,7 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 mod tests {
 
     use super::*;
-    use crate::PinnedVecGrowthError;
+    use crate::{CapacityState, PinnedVecGrowthError};
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
@@ -48,6 +48,10 @@ mod tests {
 
         fn capacity(&self) -> usize {
             self.0.capacity()
+        }
+
+        fn capacity_state(&self) -> CapacityState {
+            CapacityState::FixedCapacity(self.capacity())
         }
 
         fn extend_from_slice(&mut self, other: &[T])
@@ -150,6 +154,10 @@ mod tests {
         }
 
         unsafe fn grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
+            Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
+        }
+
+        unsafe fn concurrently_grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
             Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
     }
