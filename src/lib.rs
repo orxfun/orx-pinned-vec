@@ -38,11 +38,9 @@
 //!
 //! There are various situations where pinned elements are necessary.
 //!
-//! * It is critical in enabling **efficient, convenient and safe self-referential collections** with thin references, see [`SelfRefCol`](https://crates.io/crates/orx-selfref-col) for details.
-//! * It is essential in allowing an **immutable push** vector; i.e., [`ImpVec`](https://crates.io/crates/orx-imp-vec). This is a very useful operation when the desired collection is a bag or a container of things, rather than having a collective meaning. In such cases, `ImpVec` avoids heap allocations and wide pointers such as `Box` or `Rc` or etc.
-//! * It is important for **async** code; following [blog](https://blog.cloudflare.com/pin-and-unpin-in-rust) could be useful for the interested.
-//!
-//! *As explained in [rust-docs](https://doc.rust-lang.org/std/pin/index.html), there exist `Pin` and `Unpin` types for similar purposes. However, the solution is complicated and low level using `PhantomPinned`, `NonNull`, `dangling`, `Box::pin`, pointer accesses, etc.*
+//! * It is critical in enabling **efficient, convenient and safe self-referential collections** with thin references, see [`SelfRefCol`](https://crates.io/crates/orx-selfref-col) for details, and its special cases such as [`LinkedList`](https://crates.io/crates/orx-linked-list).
+//! * It is essential in allowing an **immutable push** vector; i.e., [`ImpVec`](https://crates.io/crates/orx-imp-vec). This is a very useful operation when the desired collection is a bag or a container of things, rather than having a collective meaning. In such cases, `ImpVec` allows avoiding certain borrow checker complexities, heap allocations and wide pointers such as `Box` or `Rc` or etc.
+//! * It is important for **concurrent** programs since it eliminates safety concerns related with elements implicitly carried to different memory locations. This helps reducing and dealing with the complexity of concurrency. [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) is a very simplistic and efficient concurrent data structure built on top of pinned vector guarantees.
 //!
 //! ## C. Implementations
 //!
@@ -64,12 +62,14 @@
     clippy::todo
 )]
 
+mod capacity;
 mod errors;
 mod pinned_vec;
 mod pinned_vec_tests;
 /// Utility functions to make PinnedVec implementations more convenient.
 pub mod utils;
 
+pub use capacity::CapacityState;
 pub use errors::PinnedVecGrowthError;
 pub use pinned_vec::PinnedVec;
 pub use pinned_vec_tests::test_all::test_pinned_vec;
