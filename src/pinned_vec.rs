@@ -230,13 +230,20 @@ pub trait PinnedVec<T> {
     /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
     /// * increases the capacity to `x >= new_capacity` otherwise if the operation succeeds.
     ///
+    /// When `zero_memory` is set to true, the pinned vector will zero out the new allocated memory
+    /// corresponding to positions starting from `self.len()` to `new_capacity`.
+    ///
     /// # Safety
     ///
     /// This method is unsafe due to the internal guarantees of pinned vectors.
     /// * A `SplitVec`, on the other hand, can grow to the `new_capacity` without any problem.
     /// However, it is not designed to have intermediate empty fragments, while `grow_to` can leave such fragments.
     /// Hence, the caller is responsible for handling this.
-    unsafe fn grow_to(&mut self, new_capacity: usize) -> Result<usize, PinnedVecGrowthError>;
+    unsafe fn grow_to(
+        &mut self,
+        new_capacity: usize,
+        zero_memory: bool,
+    ) -> Result<usize, PinnedVecGrowthError>;
 
     /// Increases the capacity of the vector at least up to the `new_capacity`:
     /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
@@ -248,6 +255,9 @@ pub trait PinnedVec<T> {
     ///
     /// This additional guarantee is irrelevant for single-threaded programs, while critical for concurrent programs.
     ///
+    /// When `zero_memory` is set to true, the pinned vector will zero out the new allocated memory
+    /// corresponding to positions starting from `self.len()` to `new_capacity`.
+    ///
     /// # Safety
     ///
     /// This method is unsafe due to the internal guarantees of pinned vectors.
@@ -257,6 +267,7 @@ pub trait PinnedVec<T> {
     unsafe fn concurrently_grow_to(
         &mut self,
         new_capacity: usize,
+        zero_memory: bool,
     ) -> Result<usize, PinnedVecGrowthError>;
 }
 
