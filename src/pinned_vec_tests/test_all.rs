@@ -153,11 +153,15 @@ mod tests {
             Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
 
-        unsafe fn grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
+        unsafe fn grow_to(&mut self, _: usize, _: bool) -> Result<usize, PinnedVecGrowthError> {
             Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
 
-        unsafe fn concurrently_grow_to(&mut self, _: usize) -> Result<usize, PinnedVecGrowthError> {
+        unsafe fn concurrently_grow_to(
+            &mut self,
+            _: usize,
+            _: bool,
+        ) -> Result<usize, PinnedVecGrowthError> {
             Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
         }
     }
