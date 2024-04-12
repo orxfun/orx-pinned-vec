@@ -153,4 +153,11 @@ impl<T> PinnedVec<T> for TestVec<T> {
     ) -> Result<usize, PinnedVecGrowthError> {
         Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
     }
+
+    fn try_reserve_maximum_concurrent_capacity(
+        &mut self,
+        _new_maximum_capacity: usize,
+    ) -> Result<usize, String> {
+        Err("cannot reserve".to_string())
+    }
 }
