@@ -245,6 +245,8 @@ pub trait PinnedVec<T> {
         zero_memory: bool,
     ) -> Result<usize, PinnedVecGrowthError>;
 
+    // concurrency
+
     /// Increases the capacity of the vector at least up to the `new_capacity`:
     /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
     /// * increases the capacity to `x >= new_capacity` otherwise if the operation succeeds.
@@ -269,6 +271,16 @@ pub trait PinnedVec<T> {
         new_capacity: usize,
         zero_memory: bool,
     ) -> Result<usize, PinnedVecGrowthError>;
+
+    /// Tries to make sure that the pinned vector is capable of growing up to the given `new_maximum_capacity` safely in a concurrent execution.
+    /// Returns `Ok` of the new maximum capacity which is greater than or equal to the requested `new_maximum_capacity`; or the corresponding `Error` if the attempt fails.
+    ///
+    /// Importantly, note that this method does **not** lead to reserving memory for `new_maximum_capacity` elements.
+    /// It only makes sure that such an allocation will be possible with shared references which can be required in concurrent execution.
+    fn try_reserve_maximum_concurrent_capacity(
+        &mut self,
+        new_maximum_capacity: usize,
+    ) -> Result<usize, String>;
 }
 
 #[cfg(test)]
