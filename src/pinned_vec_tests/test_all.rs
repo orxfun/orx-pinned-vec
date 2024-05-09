@@ -28,6 +28,13 @@ mod tests {
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
+    impl<T> IntoIterator for JustVec<T> {
+        type Item = T;
+        type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
+        fn into_iter(self) -> Self::IntoIter {
+            self.0.into_iter()
+        }
+    }
     impl<T> PinnedVec<T> for JustVec<T> {
         type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
         type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;

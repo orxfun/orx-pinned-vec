@@ -14,6 +14,14 @@ impl<T> TestVec<T> {
     }
 }
 
+impl<T> IntoIterator for TestVec<T> {
+    type Item = T;
+    type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl<T> PinnedVec<T> for TestVec<T> {
     type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
     type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;
