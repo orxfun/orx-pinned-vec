@@ -1,5 +1,5 @@
 use crate::*;
-use std::iter::Rev;
+use std::{cmp::Ordering, iter::Rev};
 
 pub struct TestVec<T>(Vec<T>);
 
@@ -144,6 +144,13 @@ impl<T> PinnedVec<T> for TestVec<T> {
 
     unsafe fn set_len(&mut self, new_len: usize) {
         self.0.set_len(new_len)
+    }
+
+    fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&T) -> Ordering,
+    {
+        self.0.binary_search_by(f)
     }
 
     fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
