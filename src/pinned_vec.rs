@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::{errors::PinnedVecGrowthError, CapacityState};
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
@@ -217,6 +219,121 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
     /// - `new_len` must be less than or equal to `capacity()`.
     /// - The elements at `old_len..new_len` must be initialized.
     unsafe fn set_len(&mut self, new_len: usize);
+
+    /// Binary searches vector slice with a comparator function.
+    ///
+    /// The comparator function `f` should return an order code that indicates whether its argument is Less, Equal or Greater the desired target.
+    /// If the vector is not sorted or if the comparator function does not implement an order consistent with the sort order of the underlying slice, the returned result is unspecified and meaningless.
+    ///
+    /// If the value is found then Result::Ok is returned, containing the index of the matching element.
+    /// If there are multiple matches, then any one of the matches could be returned.
+    ///
+    /// If the value is not found then Result::Err is returned, containing the index where a matching element could be inserted while maintaining sorted order.
+    ///
+    /// See also binary_search and binary_search_by_key.
+    ///
+    /// # Examples
+    ///
+    /// Below example is taken from std::Vec since expected behavior of `PinnedVec` is exactly the same.
+    ///
+    /// Looks up a series of four elements.
+    /// The first is found, with a uniquely determined position; the second and third are not found; the fourth could match any position in [1, 4].
+    ///
+    /// ```rust
+    /// let s = [0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55];
+    ///
+    /// let seek = 13;
+    /// assert_eq!(s.binary_search_by(|probe| probe.cmp(&seek)), Ok(9));
+    /// let seek = 4;
+    /// assert_eq!(s.binary_search_by(|probe| probe.cmp(&seek)), Err(7));
+    /// let seek = 100;
+    /// assert_eq!(s.binary_search_by(|probe| probe.cmp(&seek)), Err(13));
+    /// let seek = 1;
+    /// let r = s.binary_search_by(|probe| probe.cmp(&seek));
+    /// assert!(match r { Ok(1..=4) => true, _ => false, });
+    /// ```
+    fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&T) -> Ordering;
+
+    /// Binary searches this vector for the `search_value`.
+    /// If the vector is not sorted, the returned result is unspecified and
+    /// meaningless.
+    ///
+    /// If the value is found then [`Result::Ok`] is returned, containing the
+    /// index of the matching element. If there are multiple matches, then any
+    /// one of the matches could be returned
+    ///
+    /// If the value is not found then [`Result::Err`] is returned, containing
+    /// the index where a matching element could be inserted while maintaining
+    /// sorted order.
+    ///
+    /// # Examples
+    ///
+    /// Below examples are taken from std::Vec since expected behavior of `PinnedVec` is exactly the same.
+    ///
+    /// Looks up a series of four elements. The first is found, with a
+    /// uniquely determined position; the second and third are not
+    /// found; the fourth could match any position in `[1, 4]`.
+    ///
+    /// ```rust
+    /// let s = [0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55];
+    ///
+    /// assert_eq!(s.binary_search(&13),  Ok(9));
+    /// assert_eq!(s.binary_search(&4),   Err(7));
+    /// assert_eq!(s.binary_search(&100), Err(13));
+    /// let r = s.binary_search(&1);
+    /// assert!(match r { Ok(1..=4) => true, _ => false, });
+    /// ```
+    fn binary_search(&self, search_value: &T) -> Result<usize, usize>
+    where
+        T: Ord,
+    {
+        self.binary_search_by(|p| p.cmp(search_value))
+    }
+
+    /// Binary searches this vector with a key extraction function.
+    ///
+    /// Assumes that the vector is sorted by the key, for instance with
+    /// `sort_by_key` using the same key extraction function.
+    /// If the vector is not sorted by the key, the returned result is
+    /// unspecified and meaningless.
+    ///
+    /// If the value is found then [`Result::Ok`] is returned, containing the
+    /// index of the matching element. If there are multiple matches, then any
+    /// one of the matches could be returned.
+    ///
+    /// If the value is not found then [`Result::Err`] is returned, containing
+    /// the index where a matching element could be inserted while maintaining
+    /// sorted order.
+    ///
+    /// # Examples
+    ///
+    /// Below examples are taken from std::Vec since expected behavior of `PinnedVec` is exactly the same.
+    ///
+    /// Looks up a series of four elements in a slice of pairs sorted by
+    /// their second elements. The first is found, with a uniquely
+    /// determined position; the second and third are not found; the
+    /// fourth could match any position in `[1, 4]`.
+    ///
+    /// ```
+    /// let s = [(0, 0), (2, 1), (4, 1), (5, 1), (3, 1),
+    ///          (1, 2), (2, 3), (4, 5), (5, 8), (3, 13),
+    ///          (1, 21), (2, 34), (4, 55)];
+    ///
+    /// assert_eq!(s.binary_search_by_key(&13, |&(a, b)| b),  Ok(9));
+    /// assert_eq!(s.binary_search_by_key(&4, |&(a, b)| b),   Err(7));
+    /// assert_eq!(s.binary_search_by_key(&100, |&(a, b)| b), Err(13));
+    /// let r = s.binary_search_by_key(&1, |&(a, b)| b);
+    /// assert!(match r { Ok(1..=4) => true, _ => false, });
+    /// ```
+    fn binary_search_by_key<B, F>(&self, b: &B, mut f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&T) -> B,
+        B: Ord,
+    {
+        self.binary_search_by(|k| f(k).cmp(b))
+    }
 
     /// Attempts to increase the capacity of the pinned vector with default additional amount defined by the specific implementation.
     ///

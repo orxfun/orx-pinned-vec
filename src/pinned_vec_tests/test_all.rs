@@ -17,6 +17,7 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
     let pinned_vec = super::pop::pop(pinned_vec, test_vec_len);
     let pinned_vec = super::remove::remove(pinned_vec, test_vec_len);
     let pinned_vec = super::truncate::truncate(pinned_vec, test_vec_len);
+    let pinned_vec = super::binary_search::binary_search(pinned_vec, test_vec_len);
     let _ = super::unsafe_writer::unsafe_writer(pinned_vec, test_vec_len);
 }
 
@@ -25,6 +26,7 @@ mod tests {
 
     use super::*;
     use crate::{CapacityState, PinnedVecGrowthError};
+    use std::cmp::Ordering;
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
@@ -154,6 +156,13 @@ mod tests {
 
         unsafe fn set_len(&mut self, new_len: usize) {
             self.0.set_len(new_len)
+        }
+
+        fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>
+        where
+            F: FnMut(&T) -> Ordering,
+        {
+            self.0.binary_search_by(f)
         }
 
         fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
