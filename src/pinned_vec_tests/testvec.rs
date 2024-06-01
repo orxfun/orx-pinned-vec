@@ -1,5 +1,7 @@
 use crate::*;
-use std::{cmp::Ordering, iter::Rev};
+use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
+
+use super::helpers::range::{range_end, range_start};
 
 pub struct TestVec<T>(Vec<T>);
 
@@ -27,6 +29,8 @@ impl<T> PinnedVec<T> for TestVec<T> {
     type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;
     type IterRev<'a> = Rev<std::slice::Iter<'a, T>> where T: 'a, Self: 'a;
     type IterMutRev<'a> = Rev<std::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
+    type SliceIter<'a> = Option<&'a [T]> where T: 'a, Self: 'a;
+    type SliceMutIter<'a> = Option<&'a mut [T]> where T: 'a, Self: 'a;
 
     fn index_of(&self, data: &T) -> Option<usize> {
         crate::utils::slice::index_of(&self.0, data)
@@ -134,6 +138,34 @@ impl<T> PinnedVec<T> for TestVec<T> {
         self.0.iter_mut().rev()
     }
 
+    fn slices<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceIter<'_> {
+        let a = range_start(&range);
+        let b = range_end(&range, self.len());
+
+        match b.saturating_sub(a) {
+            0 => Some(&[]),
+            _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+                (Ordering::Equal | Ordering::Greater, _) => None,
+                (_, Ordering::Greater) => None,
+                _ => Some(&self.0[a..b]),
+            },
+        }
+    }
+
+    fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_> {
+        let a = range_start(&range);
+        let b = range_end(&range, self.len());
+
+        match b.saturating_sub(a) {
+            0 => Some(&mut []),
+            _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+                (Ordering::Equal | Ordering::Greater, _) => None,
+                (_, Ordering::Greater) => None,
+                _ => Some(&mut self.0[a..b]),
+            },
+        }
+    }
+
     unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T> {
         if index < self.0.capacity() {
             Some(self.0.as_mut_ptr().add(index))
@@ -157,8 +189,34 @@ impl<T> PinnedVec<T> for TestVec<T> {
         Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
     }
 
-    unsafe fn grow_to(&mut self, _: usize, _: bool) -> Result<usize, PinnedVecGrowthError> {
-        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
+    unsafe fn grow_to(
+        &mut self,
+        new_capacity: usize,
+        _: bool,
+    ) -> Result<usize, PinnedVecGrowthError> {
+        match self.capacity() {
+            current_capacity if current_capacity >= new_capacity => Ok(current_capacity),
+            _ => Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned),
+        }
+    }
+
+    fn grow_and_initialize<F>(
+        &mut self,
+        new_min_len: usize,
+        f: F,
+    ) -> Result<usize, PinnedVecGrowthError>
+    where
+        F: Fn() -> T,
+    {
+        let prior_len = self.len();
+        unsafe { self.grow_to(new_min_len, false) }.map(|capacity| {
+            debug_assert!(capacity >= new_min_len);
+            for _ in prior_len..capacity {
+                self.push(f());
+            }
+            debug_assert_eq!(self.len(), capacity);
+            capacity
+        })
     }
 
     unsafe fn concurrently_grow_to(

@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
-
 use crate::{errors::PinnedVecGrowthError, CapacityState};
+use std::{cmp::Ordering, ops::RangeBounds};
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
@@ -45,6 +44,18 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
         Self: 'a;
     /// Iterator yielding mutable references to the elements of the vector.
     type IterMutRev<'a>: Iterator<Item = &'a mut T>
+    where
+        T: 'a,
+        Self: 'a;
+
+    /// Iterator yielding slices corresponding to a range of indices, returned by the `slice` method.
+    type SliceIter<'a>: IntoIterator<Item = &'a [T]>
+    where
+        T: 'a,
+        Self: 'a;
+
+    /// Iterator yielding mutable slices corresponding to a range of indices, returned by the `slice_mut` and `slice_mut_unchecked` methods.
+    type SliceMutIter<'a>: IntoIterator<Item = &'a mut [T]>
     where
         T: 'a,
         Self: 'a;
@@ -199,6 +210,18 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
     fn iter_rev(&self) -> Self::IterRev<'_>;
     /// Returns a reversed back-to-front iterator mutable references to elements of the vector.
     fn iter_mut_rev(&mut self) -> Self::IterMutRev<'_>;
+
+    /// Returns the view on the required `range` as an iterator of slices:
+    ///
+    /// * returns an empty iterator if the range is out of bounds;
+    /// * returns an iterator yielding ordered slices that forms the required range when chained.
+    fn slices<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceIter<'_>;
+
+    /// Returns a mutable view on the required `range` as an iterator of mutable slices:
+    ///
+    /// * returns an empty iterator if the range is out of bounds;
+    /// * returns an iterator yielding ordered slices that forms the required range when chained.
+    fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_>;
 
     /// Returns a mutable reference to the `index`-th element of the vector.
     ///
@@ -361,6 +384,54 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
         new_capacity: usize,
         zero_memory: bool,
     ) -> Result<usize, PinnedVecGrowthError>;
+
+    /// Increases the capacity of the vector at least up to the `new_min_len`:
+    /// * will not allocate if `new_min_len <= self.capacity()`, and returns `Ok(self.capacity())`;
+    /// * increases the capacity to `x >= new_min_len` otherwise if the operation succeeds.
+    ///
+    /// Next, the new available positions, i.e. `self.len()..self.capacity()` will be filled with the same value obtained by `f`.
+    /// Finally, `self.len()` will be equal to `self.capacity()`.
+    ///
+    /// Returns:
+    /// * Ok of the new capacity, or
+    /// * the Err if the pinned vector is not capable of growing to the required capacity while keeping its elements pinned.
+    fn grow_and_initialize<F>(
+        &mut self,
+        new_min_len: usize,
+        f: F,
+    ) -> Result<usize, PinnedVecGrowthError>
+    where
+        F: Fn() -> T,
+        Self: Sized,
+    {
+        fn fill_with<T, P: PinnedVec<T>, F: Fn() -> T>(vec: &mut P, upto: usize, f: F) -> usize {
+            let len = vec.len();
+            debug_assert!(upto >= len);
+            for _ in len..upto {
+                vec.push(f());
+            }
+
+            let len2 = vec.len();
+            let upto2 = vec.capacity();
+            debug_assert!(upto2 >= len2);
+            for _ in len2..upto2 {
+                vec.push(f());
+            }
+
+            debug_assert_eq!(vec.len(), upto2);
+            debug_assert_eq!(vec.capacity(), upto2);
+
+            upto2
+        }
+
+        let prior_len = self.len();
+        let new_capacity = match new_min_len.cmp(&prior_len) {
+            Ordering::Less | Ordering::Equal => fill_with(self, prior_len, f),
+            Ordering::Greater => fill_with(self, new_min_len, f),
+        };
+
+        Ok(new_capacity)
+    }
 
     // concurrency
 
