@@ -49,13 +49,13 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
         Self: 'a;
 
     /// Iterator yielding slices corresponding to a range of indices, returned by the `slice` method.
-    type SliceIter<'a>: IntoIterator<Item = &'a [T]>
+    type SliceIter<'a>: IntoIterator<Item = &'a [T]> + Default
     where
         T: 'a,
         Self: 'a;
 
     /// Iterator yielding mutable slices corresponding to a range of indices, returned by the `slice_mut` and `slice_mut_unchecked` methods.
-    type SliceMutIter<'a>: IntoIterator<Item = &'a mut [T]>
+    type SliceMutIter<'a>: IntoIterator<Item = &'a mut [T]> + Default
     where
         T: 'a,
         Self: 'a;
