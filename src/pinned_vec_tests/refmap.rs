@@ -20,20 +20,15 @@ impl DerefMut for RefMap {
 
 impl RefMap {
     pub fn new(max_num_indices: usize, max_len: usize) -> Self {
-        fn random_index(i: usize, max_len: usize) -> usize {
-            use std::time::{SystemTime, UNIX_EPOCH};
-            let nanos = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("failed to create random index")
-                .subsec_nanos() as usize
-                + i;
-            nanos % max_len
+        fn random_idx(i: usize, max_len: usize) -> usize {
+            let x = (((((2 * i + 7) / 3) + max_len) * 5).saturating_sub(71)) + 44;
+            x % max_len
         }
 
         let mut map = std::collections::HashMap::new();
         if max_len > 0 {
             for i in 0..max_num_indices {
-                let idx = random_index(i, max_len);
+                let idx = random_idx(i, max_len);
                 map.entry(idx).or_insert(None);
             }
         }

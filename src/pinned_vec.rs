@@ -1,4 +1,5 @@
-use crate::{errors::PinnedVecGrowthError, CapacityState};
+use crate::CapacityState;
+use orx_pseudo_default::PseudoDefault;
 use std::{cmp::Ordering, ops::RangeBounds};
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
@@ -26,7 +27,7 @@ use std::{cmp::Ordering, ops::RangeBounds};
 /// | `pop()` | does not change the memory locations of the first `n-1` elements, the `n`-th element is removed |
 /// | `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
 /// | `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
-pub trait PinnedVec<T>: IntoIterator<Item = T> {
+pub trait PinnedVec<T>: IntoIterator<Item = T> + PseudoDefault {
     /// Iterator yielding references to the elements of the vector.
     type Iter<'a>: Iterator<Item = &'a T>
     where
@@ -357,118 +358,6 @@ pub trait PinnedVec<T>: IntoIterator<Item = T> {
     {
         self.binary_search_by(|k| f(k).cmp(b))
     }
-
-    /// Attempts to increase the capacity of the pinned vector with default additional amount defined by the specific implementation.
-    ///
-    /// The method:
-    /// * ensures that all already allocated elements stay pinned their memory locations,
-    /// * and returns the new capacity which is greater than or equal to the current capacity if the operation succeeds,
-    /// * corresponding `Err` if it fails.
-    fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError>;
-
-    /// Increases the capacity of the vector at least up to the `new_capacity`:
-    /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
-    /// * increases the capacity to `x >= new_capacity` otherwise if the operation succeeds.
-    ///
-    /// When `zero_memory` is set to true, the pinned vector will zero out the new allocated memory
-    /// corresponding to positions starting from `self.len()` to `new_capacity`.
-    ///
-    /// # Safety
-    ///
-    /// This method is unsafe due to the internal guarantees of pinned vectors.
-    /// * A `SplitVec`, on the other hand, can grow to the `new_capacity` without any problem.
-    /// However, it is not designed to have intermediate empty fragments, while `grow_to` can leave such fragments.
-    /// Hence, the caller is responsible for handling this.
-    unsafe fn grow_to(
-        &mut self,
-        new_capacity: usize,
-        zero_memory: bool,
-    ) -> Result<usize, PinnedVecGrowthError>;
-
-    /// Increases the capacity of the vector at least up to the `new_min_len`:
-    /// * will not allocate if `new_min_len <= self.capacity()`, and returns `Ok(self.capacity())`;
-    /// * increases the capacity to `x >= new_min_len` otherwise if the operation succeeds.
-    ///
-    /// Next, the new available positions, i.e. `self.len()..self.capacity()` will be filled with the same value obtained by `f`.
-    /// Finally, `self.len()` will be equal to `self.capacity()`.
-    ///
-    /// Returns:
-    /// * Ok of the new capacity, or
-    /// * the Err if the pinned vector is not capable of growing to the required capacity while keeping its elements pinned.
-    fn grow_and_initialize<F>(
-        &mut self,
-        new_min_len: usize,
-        f: F,
-    ) -> Result<usize, PinnedVecGrowthError>
-    where
-        F: Fn() -> T,
-        Self: Sized,
-    {
-        fn fill_with<T, P: PinnedVec<T>, F: Fn() -> T>(vec: &mut P, upto: usize, f: F) -> usize {
-            let len = vec.len();
-            debug_assert!(upto >= len);
-            for _ in len..upto {
-                vec.push(f());
-            }
-
-            let len2 = vec.len();
-            let upto2 = vec.capacity();
-            debug_assert!(upto2 >= len2);
-            for _ in len2..upto2 {
-                vec.push(f());
-            }
-
-            debug_assert_eq!(vec.len(), upto2);
-            debug_assert_eq!(vec.capacity(), upto2);
-
-            upto2
-        }
-
-        let prior_len = self.len();
-        let new_capacity = match new_min_len.cmp(&prior_len) {
-            Ordering::Less | Ordering::Equal => fill_with(self, prior_len, f),
-            Ordering::Greater => fill_with(self, new_min_len, f),
-        };
-
-        Ok(new_capacity)
-    }
-
-    // concurrency
-
-    /// Increases the capacity of the vector at least up to the `new_capacity`:
-    /// * has no affect if `new_capacity <= self.capacity()`, and returns `Ok(self.capacity())`;
-    /// * increases the capacity to `x >= new_capacity` otherwise if the operation succeeds.
-    ///
-    /// It differs from `grow_to` method by the following:
-    /// * as all `PinnedVec` methods, `grow_to` is responsible for keeping elements pinned to their locations;
-    /// * while `concurrently_grow_to` provides additional guarantees so that meta information storing memory locations of the elements also keep pinned to their locations.
-    ///
-    /// This additional guarantee is irrelevant for single-threaded programs, while critical for concurrent programs.
-    ///
-    /// When `zero_memory` is set to true, the pinned vector will zero out the new allocated memory
-    /// corresponding to positions starting from `self.len()` to `new_capacity`.
-    ///
-    /// # Safety
-    ///
-    /// This method is unsafe due to the internal guarantees of pinned vectors.
-    /// * A `SplitVec`, on the other hand, can grow to the `new_capacity` without any problem.
-    /// However, it is not designed to have intermediate empty fragments, while `grow_to` can leave such fragments.
-    /// Hence, the caller is responsible for handling this.
-    unsafe fn concurrently_grow_to(
-        &mut self,
-        new_capacity: usize,
-        zero_memory: bool,
-    ) -> Result<usize, PinnedVecGrowthError>;
-
-    /// Tries to make sure that the pinned vector is capable of growing up to the given `new_maximum_capacity` safely in a concurrent execution.
-    /// Returns `Ok` of the new maximum capacity which is greater than or equal to the requested `new_maximum_capacity`; or the corresponding `Error` if the attempt fails.
-    ///
-    /// Importantly, note that this method does **not** lead to reserving memory for `new_maximum_capacity` elements.
-    /// It only makes sure that such an allocation will be possible with shared references which can be required in concurrent execution.
-    fn try_reserve_maximum_concurrent_capacity(
-        &mut self,
-        new_maximum_capacity: usize,
-    ) -> Result<usize, String>;
 }
 
 #[cfg(test)]

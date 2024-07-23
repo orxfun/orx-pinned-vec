@@ -18,7 +18,6 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
     let pinned_vec = super::remove::remove(pinned_vec, test_vec_len);
     let pinned_vec = super::truncate::truncate(pinned_vec, test_vec_len);
     let pinned_vec = super::slices::slices(pinned_vec, test_vec_len);
-    let pinned_vec = super::grow_and_initialize::grow(pinned_vec, test_vec_len);
     let pinned_vec = super::binary_search::binary_search(pinned_vec, test_vec_len);
     let _ = super::unsafe_writer::unsafe_writer(pinned_vec, test_vec_len);
 }
@@ -26,15 +25,30 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 #[cfg(test)]
 mod tests {
 
+    use orx_pseudo_default::PseudoDefault;
+
     use super::*;
     use crate::{
         pinned_vec_tests::helpers::range::{range_end, range_start},
-        CapacityState, PinnedVecGrowthError,
+        CapacityState,
     };
-    use std::{cmp::Ordering, ops::RangeBounds};
+    use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
+
+    impl<T> PseudoDefault for JustVec<T> {
+        fn pseudo_default() -> Self {
+            Self(Default::default())
+        }
+    }
+
+    impl<T> JustVec<T> {
+        fn assert_has_room(&self, required_additional_space: usize) {
+            assert!(PinnedVec::len(self) + required_additional_space <= self.0.capacity())
+        }
+    }
+
     impl<T> IntoIterator for JustVec<T> {
         type Item = T;
         type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
@@ -42,11 +56,12 @@ mod tests {
             self.0.into_iter()
         }
     }
+
     impl<T> PinnedVec<T> for JustVec<T> {
         type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
         type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;
-        type IterRev<'a> =std::iter:: Rev<std::slice::Iter<'a, T>> where T: 'a, Self: 'a;
-        type IterMutRev<'a> =std::iter:: Rev<std::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
+        type IterRev<'a> = Rev<std::slice::Iter<'a, T>> where T: 'a, Self: 'a;
+        type IterMutRev<'a> = Rev<std::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
         type SliceIter<'a> = Option<&'a [T]> where T: 'a, Self: 'a;
         type SliceMutIter<'a> = Option<&'a mut [T]> where T: 'a, Self: 'a;
 
@@ -67,13 +82,14 @@ mod tests {
         }
 
         fn capacity_state(&self) -> CapacityState {
-            CapacityState::FixedCapacity(self.capacity())
+            CapacityState::FixedCapacity(PinnedVec::capacity(self))
         }
 
         fn extend_from_slice(&mut self, other: &[T])
         where
             T: Clone,
         {
+            self.assert_has_room(other.len());
             self.0.extend_from_slice(other)
         }
 
@@ -106,7 +122,7 @@ mod tests {
         }
 
         unsafe fn last_unchecked(&self) -> &T {
-            &(self.0)[self.len() - 1]
+            &(self.0)[PinnedVec::len(self) - 1]
         }
 
         fn len(&self) -> usize {
@@ -114,10 +130,12 @@ mod tests {
         }
 
         fn push(&mut self, value: T) {
+            self.assert_has_room(1);
             self.0.push(value)
         }
 
         fn insert(&mut self, index: usize, element: T) {
+            self.assert_has_room(1);
             self.0.insert(index, element)
         }
 
@@ -155,11 +173,11 @@ mod tests {
 
         fn slices<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceIter<'_> {
             let a = range_start(&range);
-            let b = range_end(&range, self.len());
+            let b = range_end(&range, PinnedVec::len(self));
 
             match b.saturating_sub(a) {
                 0 => Some(&[]),
-                _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+                _ => match (a.cmp(&PinnedVec::len(self)), b.cmp(&PinnedVec::len(self))) {
                     (Ordering::Equal | Ordering::Greater, _) => None,
                     (_, Ordering::Greater) => None,
                     _ => Some(&self.0[a..b]),
@@ -169,11 +187,11 @@ mod tests {
 
         fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_> {
             let a = range_start(&range);
-            let b = range_end(&range, self.len());
+            let b = range_end(&range, PinnedVec::len(self));
 
             match b.saturating_sub(a) {
                 0 => Some(&mut []),
-                _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+                _ => match (a.cmp(&PinnedVec::len(self)), b.cmp(&PinnedVec::len(self))) {
                     (Ordering::Equal | Ordering::Greater, _) => None,
                     (_, Ordering::Greater) => None,
                     _ => Some(&mut self.0[a..b]),
@@ -198,55 +216,6 @@ mod tests {
             F: FnMut(&T) -> Ordering,
         {
             self.0.binary_search_by(f)
-        }
-
-        fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
-            Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
-        }
-
-        unsafe fn grow_to(
-            &mut self,
-            new_capacity: usize,
-            _: bool,
-        ) -> Result<usize, PinnedVecGrowthError> {
-            match self.capacity() {
-                current_capacity if current_capacity >= new_capacity => Ok(current_capacity),
-                _ => Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned),
-            }
-        }
-
-        fn grow_and_initialize<F>(
-            &mut self,
-            new_min_len: usize,
-            f: F,
-        ) -> Result<usize, PinnedVecGrowthError>
-        where
-            F: Fn() -> T,
-        {
-            let prior_len = self.len();
-            unsafe { self.grow_to(new_min_len, false) }.map(|capacity| {
-                debug_assert!(capacity >= new_min_len);
-                for _ in prior_len..capacity {
-                    self.push(f());
-                }
-                debug_assert_eq!(self.len(), capacity);
-                capacity
-            })
-        }
-
-        unsafe fn concurrently_grow_to(
-            &mut self,
-            _: usize,
-            _: bool,
-        ) -> Result<usize, PinnedVecGrowthError> {
-            Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
-        }
-
-        fn try_reserve_maximum_concurrent_capacity(
-            &mut self,
-            _new_maximum_capacity: usize,
-        ) -> Result<usize, String> {
-            Err("cannot reserve".to_string())
         }
     }
 
