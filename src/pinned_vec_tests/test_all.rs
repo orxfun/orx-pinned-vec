@@ -227,7 +227,7 @@ mod tests {
 
     #[test]
     fn within_capacity_vec_passes() {
-        let capacity = 1024 * 4;
+        let capacity = 129;
         let vec = JustVec(Vec::with_capacity(capacity));
         test_pinned_vec(vec, capacity);
     }

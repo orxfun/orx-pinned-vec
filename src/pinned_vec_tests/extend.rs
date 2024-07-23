@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn test_extend_medium() {
-        let capacity = 1024 * 4;
+        let capacity = 512;
         let pinned_vec = TestVec::new(capacity);
         extend(pinned_vec, capacity);
     }

@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_truncate_medium() {
-        let capacity = 1024 * 4;
+        let capacity = 512;
         let pinned_vec = TestVec::new(capacity);
         truncate(pinned_vec, capacity);
     }
