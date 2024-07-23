@@ -1,6 +1,5 @@
 mod binary_search;
 mod extend;
-mod grow_and_initialize;
 mod insert;
 mod pop;
 mod push;

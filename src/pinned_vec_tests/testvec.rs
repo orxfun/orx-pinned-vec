@@ -1,9 +1,15 @@
+use super::helpers::range::{range_end, range_start};
 use crate::*;
+use orx_pseudo_default::PseudoDefault;
 use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
 
-use super::helpers::range::{range_end, range_start};
-
 pub struct TestVec<T>(Vec<T>);
+
+impl<T> PseudoDefault for TestVec<T> {
+    fn pseudo_default() -> Self {
+        Self(Default::default())
+    }
+}
 
 impl<T> TestVec<T> {
     #[cfg(test)]
@@ -12,7 +18,7 @@ impl<T> TestVec<T> {
     }
 
     fn assert_has_room(&self, required_additional_space: usize) {
-        assert!(self.len() + required_additional_space <= self.0.capacity())
+        assert!(PinnedVec::len(self) + required_additional_space <= self.0.capacity())
     }
 }
 
@@ -49,7 +55,7 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     fn capacity_state(&self) -> CapacityState {
-        CapacityState::FixedCapacity(self.capacity())
+        CapacityState::FixedCapacity(PinnedVec::capacity(self))
     }
 
     fn extend_from_slice(&mut self, other: &[T])
@@ -89,7 +95,7 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     unsafe fn last_unchecked(&self) -> &T {
-        &(self.0)[self.len() - 1]
+        &(self.0)[PinnedVec::len(self) - 1]
     }
 
     fn len(&self) -> usize {
@@ -140,11 +146,11 @@ impl<T> PinnedVec<T> for TestVec<T> {
 
     fn slices<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceIter<'_> {
         let a = range_start(&range);
-        let b = range_end(&range, self.len());
+        let b = range_end(&range, PinnedVec::len(self));
 
         match b.saturating_sub(a) {
             0 => Some(&[]),
-            _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+            _ => match (a.cmp(&PinnedVec::len(self)), b.cmp(&PinnedVec::len(self))) {
                 (Ordering::Equal | Ordering::Greater, _) => None,
                 (_, Ordering::Greater) => None,
                 _ => Some(&self.0[a..b]),
@@ -154,11 +160,11 @@ impl<T> PinnedVec<T> for TestVec<T> {
 
     fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_> {
         let a = range_start(&range);
-        let b = range_end(&range, self.len());
+        let b = range_end(&range, PinnedVec::len(self));
 
         match b.saturating_sub(a) {
             0 => Some(&mut []),
-            _ => match (a.cmp(&self.len()), b.cmp(&self.len())) {
+            _ => match (a.cmp(&PinnedVec::len(self)), b.cmp(&PinnedVec::len(self))) {
                 (Ordering::Equal | Ordering::Greater, _) => None,
                 (_, Ordering::Greater) => None,
                 _ => Some(&mut self.0[a..b]),
@@ -183,54 +189,5 @@ impl<T> PinnedVec<T> for TestVec<T> {
         F: FnMut(&T) -> Ordering,
     {
         self.0.binary_search_by(f)
-    }
-
-    fn try_grow(&mut self) -> Result<usize, PinnedVecGrowthError> {
-        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
-    }
-
-    unsafe fn grow_to(
-        &mut self,
-        new_capacity: usize,
-        _: bool,
-    ) -> Result<usize, PinnedVecGrowthError> {
-        match self.capacity() {
-            current_capacity if current_capacity >= new_capacity => Ok(current_capacity),
-            _ => Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned),
-        }
-    }
-
-    fn grow_and_initialize<F>(
-        &mut self,
-        new_min_len: usize,
-        f: F,
-    ) -> Result<usize, PinnedVecGrowthError>
-    where
-        F: Fn() -> T,
-    {
-        let prior_len = self.len();
-        unsafe { self.grow_to(new_min_len, false) }.map(|capacity| {
-            debug_assert!(capacity >= new_min_len);
-            for _ in prior_len..capacity {
-                self.push(f());
-            }
-            debug_assert_eq!(self.len(), capacity);
-            capacity
-        })
-    }
-
-    unsafe fn concurrently_grow_to(
-        &mut self,
-        _: usize,
-        _: bool,
-    ) -> Result<usize, PinnedVecGrowthError> {
-        Err(PinnedVecGrowthError::FailedToGrowWhileKeepingElementsPinned)
-    }
-
-    fn try_reserve_maximum_concurrent_capacity(
-        &mut self,
-        _new_maximum_capacity: usize,
-    ) -> Result<usize, String> {
-        Err("cannot reserve".to_string())
     }
 }

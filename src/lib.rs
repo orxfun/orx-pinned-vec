@@ -63,13 +63,17 @@
 )]
 
 mod capacity;
+mod concurrent_pinned_vec;
 mod errors;
+mod into_concurrent_pinned_vec;
 mod pinned_vec;
 mod pinned_vec_tests;
 /// Utility functions to make PinnedVec implementations more convenient.
 pub mod utils;
 
 pub use capacity::CapacityState;
+pub use concurrent_pinned_vec::ConcurrentPinnedVec;
 pub use errors::PinnedVecGrowthError;
+pub use into_concurrent_pinned_vec::IntoConcurrentPinnedVec;
 pub use pinned_vec::PinnedVec;
 pub use pinned_vec_tests::test_all::test_pinned_vec;
