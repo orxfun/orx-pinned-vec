@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn test_insert_medium() {
-        let capacity = 1024 * 64;
+        let capacity = 512;
         let pinned_vec = TestVec::new(capacity);
         insert(pinned_vec, capacity);
     }

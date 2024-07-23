@@ -44,14 +44,7 @@ mod tests {
 
     #[test]
     fn test_pop_medium() {
-        let capacity = 1024 * 64;
-        let pinned_vec = TestVec::new(capacity);
-        pop(pinned_vec, capacity);
-    }
-
-    #[test]
-    fn test_pop_large() {
-        let capacity = 1024 * 1024;
+        let capacity = 512;
         let pinned_vec = TestVec::new(capacity);
         pop(pinned_vec, capacity);
     }

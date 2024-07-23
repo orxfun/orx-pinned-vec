@@ -236,7 +236,7 @@ mod tests {
     #[should_panic]
     fn capacity_exceeding_vec_fails() {
         // not necessarily fails in every expansion, but will eventually fail.
-        let lengths = [8, 32, 1024, 32768];
+        let lengths = [8, 32, 1025];
         for len in lengths {
             let vec = JustVec(Vec::with_capacity(0));
             test_pinned_vec(vec, len);

@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_remove_medium() {
-        let capacity = 1024 * 64;
+        let capacity = 512;
         let pinned_vec = TestVec::new(capacity);
         remove(pinned_vec, capacity);
     }

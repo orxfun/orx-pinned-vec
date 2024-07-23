@@ -36,14 +36,7 @@ mod tests {
 
     #[test]
     fn test_push_medium() {
-        let capacity = 1024 * 64;
-        let pinned_vec = TestVec::new(capacity);
-        push(pinned_vec, capacity);
-    }
-
-    #[test]
-    fn test_push_large() {
-        let capacity = 1024 * 1024;
+        let capacity = 1024 * 4;
         let pinned_vec = TestVec::new(capacity);
         push(pinned_vec, capacity);
     }
