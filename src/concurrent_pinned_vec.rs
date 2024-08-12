@@ -65,6 +65,9 @@ pub trait ConcurrentPinnedVec<T> {
         range: R,
     ) -> <Self::P as PinnedVec<T>>::SliceMutIter<'_>;
 
+    /// Returns an iterator of slices to the elements extending over positions `range` of the vector.
+    fn slices<R: RangeBounds<usize>>(&self, range: R) -> <Self::P as PinnedVec<T>>::SliceIter<'_>;
+
     // capacity
 
     /// Returns the maximum possible capacity that the vector can concurrently grow to without requiring a `&mut self` reference.
@@ -85,6 +88,30 @@ pub trait ConcurrentPinnedVec<T> {
     /// If the method returns an error, `reserve_maximum_concurrent_capacity` method can be used; however, with a `&mut self` reference.
     /// Then, `grow_to` will succeed.
     fn grow_to(&self, new_capacity: usize) -> Result<usize, PinnedVecGrowthError>;
+
+    /// Tries to concurrently grow the capacity of the vector to at least `new_capacity`. Returns:
+    /// * Ok of the new capacity if succeeds
+    /// * Err otherwise.
+    ///
+    /// Behavior of this method is deterministic.
+    /// The method always succeeds (fails) if `new_capacity <= self.max_capacity()` (otherwise).
+    ///
+    /// If the method returns an error, `reserve_maximum_concurrent_capacity` method can be used;
+    /// however, with a `&mut self` reference.
+    /// Then, `grow_to` will succeed.
+    ///
+    /// During growth:
+    ///
+    /// * length of the vector is increased to its new capacity;
+    /// * the elements in the range `len..capacity` are filled with the values
+    /// obtained by repeatedly calling the function `fill_with`.
+    fn grow_to_and_fill_with<F>(
+        &self,
+        new_capacity: usize,
+        fill_with: F,
+    ) -> Result<usize, PinnedVecGrowthError>
+    where
+        F: Fn() -> T;
 
     /// Increases the `maximum_capacity` to the `new_maximum_capacity`.
     ///
