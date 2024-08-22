@@ -1,7 +1,11 @@
 use super::helpers::range::{range_end, range_start};
 use crate::*;
 use orx_pseudo_default::PseudoDefault;
-use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
+use std::{
+    cmp::Ordering,
+    iter::Rev,
+    ops::{Index, IndexMut, RangeBounds},
+};
 
 pub struct TestVec<T>(Vec<T>);
 
@@ -19,6 +23,20 @@ impl<T> TestVec<T> {
 
     fn assert_has_room(&self, required_additional_space: usize) {
         assert!(PinnedVec::len(self) + required_additional_space <= self.0.capacity())
+    }
+}
+
+impl<T> Index<usize> for TestVec<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for TestVec<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 

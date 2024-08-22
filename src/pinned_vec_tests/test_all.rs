@@ -31,7 +31,11 @@ mod tests {
         CapacityState,
     };
     use orx_pseudo_default::PseudoDefault;
-    use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
+    use std::{
+        cmp::Ordering,
+        iter::Rev,
+        ops::{Index, IndexMut, RangeBounds},
+    };
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
@@ -39,6 +43,20 @@ mod tests {
     impl<T> PseudoDefault for JustVec<T> {
         fn pseudo_default() -> Self {
             Self(Default::default())
+        }
+    }
+
+    impl<T> Index<usize> for JustVec<T> {
+        type Output = T;
+
+        fn index(&self, index: usize) -> &Self::Output {
+            &self.0[index]
+        }
+    }
+
+    impl<T> IndexMut<usize> for JustVec<T> {
+        fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+            &mut self.0[index]
         }
     }
 

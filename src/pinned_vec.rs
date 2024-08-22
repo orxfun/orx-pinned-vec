@@ -1,6 +1,9 @@
 use crate::CapacityState;
 use orx_pseudo_default::PseudoDefault;
-use std::{cmp::Ordering, ops::RangeBounds};
+use std::{
+    cmp::Ordering,
+    ops::{Index, IndexMut, RangeBounds},
+};
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
@@ -27,7 +30,9 @@ use std::{cmp::Ordering, ops::RangeBounds};
 /// | `pop()` | does not change the memory locations of the first `n-1` elements, the `n`-th element is removed |
 /// | `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
 /// | `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
-pub trait PinnedVec<T>: IntoIterator<Item = T> + PseudoDefault {
+pub trait PinnedVec<T>:
+    IntoIterator<Item = T> + PseudoDefault + Index<usize, Output = T> + IndexMut<usize, Output = T>
+{
     /// Iterator yielding references to the elements of the vector.
     type Iter<'a>: Iterator<Item = &'a T>
     where
