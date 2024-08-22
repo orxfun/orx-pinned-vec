@@ -25,13 +25,12 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 #[cfg(test)]
 mod tests {
 
-    use orx_pseudo_default::PseudoDefault;
-
     use super::*;
     use crate::{
         pinned_vec_tests::helpers::range::{range_end, range_start},
         CapacityState,
     };
+    use orx_pseudo_default::PseudoDefault;
     use std::{cmp::Ordering, iter::Rev, ops::RangeBounds};
 
     #[derive(Debug)]
@@ -216,6 +215,28 @@ mod tests {
             F: FnMut(&T) -> Ordering,
         {
             self.0.binary_search_by(f)
+        }
+
+        fn sort(&mut self)
+        where
+            T: Ord,
+        {
+            self.0.sort()
+        }
+
+        fn sort_by<F>(&mut self, compare: F)
+        where
+            F: FnMut(&T, &T) -> Ordering,
+        {
+            self.0.sort_by(compare)
+        }
+
+        fn sort_by_key<K, F>(&mut self, f: F)
+        where
+            F: FnMut(&T) -> K,
+            K: Ord,
+        {
+            self.0.sort_by_key(f)
         }
     }
 
