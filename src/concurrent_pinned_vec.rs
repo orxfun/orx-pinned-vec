@@ -1,5 +1,5 @@
 use crate::{PinnedVec, PinnedVecGrowthError};
-use std::ops::RangeBounds;
+use std::ops::{Range, RangeBounds};
 
 /// A wrapper for a pinned vector which provides additional guarantees for concurrent programs.
 ///
@@ -23,6 +23,22 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// This method can safely be called if entries in all positions `0..len` are written.
     unsafe fn into_inner(self, len: usize) -> Self::P;
+
+    /// Clones the concurrent pinned vector with for the first `len` elements.
+    /// The created concurrent vector will have the same capacity and maximum capacity as this collection;
+    /// however, only the values within 0..len will be cloned to the target.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe due to the following.
+    /// The concurrent pinned vector is the core data structure for different concurrent collections
+    /// which allow writing to the vector in different ways.
+    /// The wrapper is responsible to deal with the gaps.
+    ///
+    /// This method can safely be called if entries in all positions `0..len` are written.
+    unsafe fn clone_with_len(&self, len: usize) -> Self
+    where
+        T: Clone;
 
     // &self get
 
@@ -110,6 +126,11 @@ pub trait ConcurrentPinnedVec<T> {
         new_capacity: usize,
         fill_with: F,
     ) -> Result<usize, PinnedVecGrowthError>
+    where
+        F: Fn() -> T;
+
+    /// Fills the provided `range` with elements created by successively calling the `fill_with` function.
+    fn fill_with<F>(&self, range: Range<usize>, fill_with: F)
     where
         F: Fn() -> T;
 
