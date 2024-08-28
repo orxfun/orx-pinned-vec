@@ -148,6 +148,24 @@ pub trait ConcurrentPinnedVec<T> {
         new_maximum_capacity: usize,
     ) -> usize;
 
+    /// Increases the `maximum_capacity` to the `new_maximum_capacity`.
+    /// If capacity extension leads to allocation, allocated memory is filled with the given function.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe since the concurrent pinned vector might contain gaps.
+    /// The vector must be gap-free while increasing the maximum capacity.
+    ///
+    /// This method can safely be called if entries in all positions `0..len` are written.
+    unsafe fn reserve_maximum_concurrent_capacity_fill_with<F>(
+        &mut self,
+        len: usize,
+        new_maximum_capacity: usize,
+        fill_with: F,
+    ) -> usize
+    where
+        F: Fn() -> T;
+
     // &mut self
 
     /// Sets the length of the underlying pinned vector to the given `len`.
