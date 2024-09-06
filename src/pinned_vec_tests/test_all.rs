@@ -24,18 +24,18 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::{
         pinned_vec_tests::helpers::range::{range_end, range_start},
         CapacityState,
     };
-    use orx_pseudo_default::PseudoDefault;
-    use std::{
+    use alloc::vec::Vec;
+    use core::{
         cmp::Ordering,
         iter::Rev,
         ops::{Index, IndexMut, RangeBounds},
     };
+    use orx_pseudo_default::PseudoDefault;
 
     #[derive(Debug)]
     struct JustVec<T>(Vec<T>);
@@ -75,10 +75,10 @@ mod tests {
     }
 
     impl<T> PinnedVec<T> for JustVec<T> {
-        type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
-        type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;
-        type IterRev<'a> = Rev<std::slice::Iter<'a, T>> where T: 'a, Self: 'a;
-        type IterMutRev<'a> = Rev<std::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
+        type Iter<'a> = core::slice::Iter<'a, T> where T: 'a, Self: 'a;
+        type IterMut<'a> = core::slice::IterMut<'a, T> where T: 'a, Self: 'a;
+        type IterRev<'a> = Rev<core::slice::Iter<'a, T>> where T: 'a, Self: 'a;
+        type IterMutRev<'a> = Rev<core::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
         type SliceIter<'a> = Option<&'a [T]> where T: 'a, Self: 'a;
         type SliceMutIter<'a> = Option<&'a mut [T]> where T: 'a, Self: 'a;
 
@@ -260,7 +260,7 @@ mod tests {
 
     #[test]
     fn empty_vec_passes() {
-        let vec = JustVec(vec![]);
+        let vec = JustVec(Vec::new());
         test_pinned_vec(vec, 0);
     }
 

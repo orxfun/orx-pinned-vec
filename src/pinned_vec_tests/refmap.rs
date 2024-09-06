@@ -1,13 +1,11 @@
 use crate::PinnedVec;
-use std::{
-    collections::HashMap,
-    ops::{Deref, DerefMut},
-};
+use alloc::collections::btree_map::BTreeMap;
+use core::ops::{Deref, DerefMut};
 
-pub struct RefMap(HashMap<usize, Option<*const usize>>);
+pub struct RefMap(BTreeMap<usize, Option<*const usize>>);
 
 impl Deref for RefMap {
-    type Target = HashMap<usize, Option<*const usize>>;
+    type Target = BTreeMap<usize, Option<*const usize>>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -25,7 +23,7 @@ impl RefMap {
             x % max_len
         }
 
-        let mut map = std::collections::HashMap::new();
+        let mut map = BTreeMap::new();
         if max_len > 0 {
             for i in 0..max_num_indices {
                 let idx = random_idx(i, max_len);
@@ -60,7 +58,7 @@ impl RefMap {
                     *addr, element_addr,
                     "element address has changed while growing"
                 );
-                let value_at_addr = unsafe { std::ptr::read(*addr) };
+                let value_at_addr = unsafe { core::ptr::read(*addr) };
                 assert_eq!(*i, value_at_addr, "value at address has changed");
             }
         }
