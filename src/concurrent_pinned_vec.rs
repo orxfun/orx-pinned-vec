@@ -1,5 +1,5 @@
 use crate::{PinnedVec, PinnedVecGrowthError};
-use std::ops::{Range, RangeBounds};
+use core::ops::{Range, RangeBounds};
 
 /// A wrapper for a pinned vector which provides additional guarantees for concurrent programs.
 ///

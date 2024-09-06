@@ -1,11 +1,12 @@
 use super::helpers::range::{range_end, range_start};
 use crate::*;
-use orx_pseudo_default::PseudoDefault;
-use std::{
+use alloc::vec::Vec;
+use core::{
     cmp::Ordering,
     iter::Rev,
     ops::{Index, IndexMut, RangeBounds},
 };
+use orx_pseudo_default::PseudoDefault;
 
 pub struct TestVec<T>(Vec<T>);
 
@@ -49,10 +50,10 @@ impl<T> IntoIterator for TestVec<T> {
 }
 
 impl<T> PinnedVec<T> for TestVec<T> {
-    type Iter<'a> = std::slice::Iter<'a, T> where T: 'a, Self: 'a;
-    type IterMut<'a> = std::slice::IterMut<'a, T> where T: 'a, Self: 'a;
-    type IterRev<'a> = Rev<std::slice::Iter<'a, T>> where T: 'a, Self: 'a;
-    type IterMutRev<'a> = Rev<std::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
+    type Iter<'a> = core::slice::Iter<'a, T> where T: 'a, Self: 'a;
+    type IterMut<'a> = core::slice::IterMut<'a, T> where T: 'a, Self: 'a;
+    type IterRev<'a> = Rev<core::slice::Iter<'a, T>> where T: 'a, Self: 'a;
+    type IterMutRev<'a> = Rev<core::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
     type SliceIter<'a> = Option<&'a [T]> where T: 'a, Self: 'a;
     type SliceMutIter<'a> = Option<&'a mut [T]> where T: 'a, Self: 'a;
 

@@ -22,7 +22,7 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
             None
         } else {
             let diff = ptr_element - ptr_beg;
-            let count = diff / std::mem::size_of::<T>();
+            let count = diff / core::mem::size_of::<T>();
             Some(count)
         }
     }
@@ -59,6 +59,7 @@ pub fn contains_reference<T>(slice: &[T], element: &T) -> bool {
 #[cfg(test)]
 mod tests {
     pub use super::*;
+    use alloc::vec::Vec;
 
     #[test]
     fn index_of_wrong() {

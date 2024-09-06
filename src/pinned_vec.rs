@@ -1,9 +1,9 @@
 use crate::CapacityState;
-use orx_pseudo_default::PseudoDefault;
-use std::{
+use core::{
     cmp::Ordering,
     ops::{Index, IndexMut, RangeBounds},
 };
+use orx_pseudo_default::PseudoDefault;
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
