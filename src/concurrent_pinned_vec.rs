@@ -120,7 +120,7 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// * length of the vector is increased to its new capacity;
     /// * the elements in the range `len..capacity` are filled with the values
-    /// obtained by repeatedly calling the function `fill_with`.
+    ///   obtained by repeatedly calling the function `fill_with`.
     fn grow_to_and_fill_with<F>(
         &self,
         new_capacity: usize,

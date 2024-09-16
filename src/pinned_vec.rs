@@ -80,6 +80,48 @@ pub trait PinnedVec<T>:
     /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
     fn index_of(&self, element: &T) -> Option<usize>;
 
+    /// Returns the index of the `element_ptr` pointing to an element of the vec.
+    ///
+    /// The complexity of this method depends on the particular `PinnedVec` implementation.
+    /// However, making use of referential equality, it possible to perform much better than *O(n)*,
+    /// where n is the vector length.
+    ///
+    /// For the two example implementations, complexity of this method:
+    /// * *O(1)* for [FixedVec](https://crates.io/crates/orx-fixed-vec);
+    /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
+    fn index_of_ptr(&self, element_ptr: *const T) -> Option<usize>;
+
+    /// Appends an element to the back of a collection and returns a pointer to its position in the vector.
+    fn push_get_ptr(&mut self, value: T) -> *const T;
+
+    /// Creates an iterator of the pointers to the elements of the vec.
+    ///
+    /// # Safety
+    ///
+    /// The implementor guarantees that the pointers are valid and belong to the elements of the vector.
+    /// However, the lifetime of the pointers might be extended by the caller;
+    /// i.e., it is not bound to the lifetime of `&self`.
+    ///
+    /// Therefore, the caller is responsible for making sure that the obtained pointers are still
+    /// valid before accessing through the pointers.
+    unsafe fn iter_ptr<'v, 'i>(&'v self) -> impl Iterator<Item = *const T> + 'i
+    where
+        T: 'i;
+
+    /// Creates a reverse iterator of the pointers to the elements of the vec, starting from the last element to the first.
+    ///
+    /// # Safety
+    ///
+    /// The implementor guarantees that the pointers are valid and belong to the elements of the vector.
+    /// However, the lifetime of the pointers might be extended by the caller;
+    /// i.e., it is not bound to the lifetime of `&self`.
+    ///
+    /// Therefore, the caller is responsible for making sure that the obtained pointers are still
+    /// valid before accessing through the pointers.
+    unsafe fn iter_ptr_rev<'v, 'i>(&'v self) -> impl Iterator<Item = *const T> + 'i
+    where
+        T: 'i;
+
     /// Returns whether or not of the `element` with the given reference belongs to this vector.
     /// In other words, returns whether or not the reference to the `element` is valid.
     ///
@@ -94,6 +136,19 @@ pub trait PinnedVec<T>:
     /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
     fn contains_reference(&self, element: &T) -> bool;
 
+    /// Returns whether or not of the element with the given pointer belongs to this vector.
+    ///
+    /// Note that `T: Eq` is not required; memory address is used.
+    ///
+    /// The complexity of this method depends on the particular `PinnedVec` implementation.
+    /// However, making use of pinned element guarantees, it possible to perform much better than *O(n)*,
+    /// where n is the vector length.
+    ///
+    /// For the two example implementations, complexity of this method:
+    /// * *O(1)* for [FixedVec](https://crates.io/crates/orx-fixed-vec);
+    /// * *O(f)* for [SplitVec](https://crates.io/crates/orx-split-vec) where f << n is the number of fragments.
+    fn contains_ptr(&self, element_ptr: *const T) -> bool;
+
     // vec
     /// Clears the vector, removing all values.
     ///
@@ -104,9 +159,9 @@ pub trait PinnedVec<T>:
     /// `clear` operation is **safe** both when `T: NotSelfRefVecItem` or not due to the following:
     ///
     /// * elements holding references to each other will be cleaned all together; hence,
-    /// none of them can have an invalid reference;
+    ///   none of them can have an invalid reference;
     /// * we cannot keep holding a reference to a vector element defined aliased the `clear` call,
-    /// since `clear` requires a `mut` reference.
+    ///   since `clear` requires a `mut` reference.
     fn clear(&mut self);
 
     /// Returns the total number of elements the vector can hold without reallocating.
@@ -229,15 +284,15 @@ pub trait PinnedVec<T>:
     /// * returns an iterator yielding ordered slices that forms the required range when chained.
     fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_>;
 
-    /// Returns a mutable reference to the `index`-th element of the vector.
+    /// Returns a pointer to the `index`-th element of the vector.
     ///
     /// Returns `None` if `index`-th position does not belong to the vector; i.e., if `index` is out of `capacity`.
+    fn get_ptr(&self, index: usize) -> Option<*const T>;
+
+    /// Returns a mutable pointer to the `index`-th element of the vector.
     ///
-    /// # Safety
-    ///
-    /// This method allows to write to a memory which is greater than the vector's length.
-    /// On the other hand, it will never return a pointer to a memory location that the vector does not own.
-    unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T>;
+    /// Returns `None` if `index`-th position does not belong to the vector; i.e., if `index` is out of `capacity`.
+    fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T>;
 
     /// Forces the length of the vector to `new_len`.
     ///

@@ -18,7 +18,7 @@ pub fn unsafe_writer<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: u
     assert_eq!(vec.len(), len1);
 
     for i in len1..max_allowed_test_len {
-        if let Some(ptr) = unsafe { vec.get_ptr_mut(i) } {
+        if let Some(ptr) = vec.get_ptr_mut(i) {
             unsafe { *ptr = i };
 
             unsafe { vec.set_len(i + 1) };
@@ -32,7 +32,7 @@ pub fn unsafe_writer<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: u
     }
 
     for i in vec.capacity()..(vec.capacity() + 100) {
-        assert!(unsafe { vec.get_ptr_mut(i) }.is_none());
+        assert!(vec.get_ptr_mut(i).is_none());
     }
 
     vec

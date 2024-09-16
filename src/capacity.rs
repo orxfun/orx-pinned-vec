@@ -3,11 +3,11 @@
 /// This information contains the current capacity which can be obtained by `capacity()` method and extends with additional useful information.
 ///
 /// * `FixedCapacity` variant only provides the current capacity.
-/// However, its additional tag informs that this capacity is a hard constraint and the vector cannot grow beyond it.
+///   However, its additional tag informs that this capacity is a hard constraint and the vector cannot grow beyond it.
 /// * `DynamicCapacity` variant informs that the vector is capable of allocating and growing its capacity.
-/// It provides `current_capacity` representing the current internal state of the vector.
-/// Additionally, `maximum_concurrent_capacity` is provided.
-/// This number represents the maximum number of elements that can safely be pushed to the vector in a concurrent program.
+///   It provides `current_capacity` representing the current internal state of the vector.
+///   Additionally, `maximum_concurrent_capacity` is provided.
+///   This number represents the maximum number of elements that can safely be pushed to the vector in a concurrent program.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CapacityState {
     /// `FixedCapacity` variant only provides the current capacity.
