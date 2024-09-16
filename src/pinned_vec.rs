@@ -159,9 +159,9 @@ pub trait PinnedVec<T>:
     /// `clear` operation is **safe** both when `T: NotSelfRefVecItem` or not due to the following:
     ///
     /// * elements holding references to each other will be cleaned all together; hence,
-    /// none of them can have an invalid reference;
+    ///   none of them can have an invalid reference;
     /// * we cannot keep holding a reference to a vector element defined aliased the `clear` call,
-    /// since `clear` requires a `mut` reference.
+    ///   since `clear` requires a `mut` reference.
     fn clear(&mut self);
 
     /// Returns the total number of elements the vector can hold without reallocating.
