@@ -61,8 +61,38 @@ impl<T> PinnedVec<T> for TestVec<T> {
         crate::utils::slice::index_of(&self.0, data)
     }
 
+    fn index_of_ptr(&self, element_ptr: *const T) -> Option<usize> {
+        crate::utils::slice::index_of_ptr(&self.0, element_ptr)
+    }
+
+    fn push_get_ptr(&mut self, value: T) -> *const T {
+        let idx = self.0.len();
+        self.0.push(value);
+        unsafe { self.0.as_ptr().add(idx) }
+    }
+
+    unsafe fn iter_ptr<'v, 'i>(&'v self) -> impl Iterator<Item = *const T> + 'i
+    where
+        T: 'i,
+    {
+        let ptr = self.0.as_ptr();
+        (0..self.0.len()).map(move |i| unsafe { ptr.add(i) })
+    }
+
+    unsafe fn iter_ptr_rev<'v, 'i>(&'v self) -> impl Iterator<Item = *const T> + 'i
+    where
+        T: 'i,
+    {
+        let ptr = self.0.as_ptr();
+        (0..self.0.len()).rev().map(move |i| unsafe { ptr.add(i) })
+    }
+
     fn contains_reference(&self, element: &T) -> bool {
-        self.index_of(element).is_some()
+        utils::slice::contains_reference(self.0.as_slice(), element)
+    }
+
+    fn contains_ptr(&self, element_ptr: *const T) -> bool {
+        utils::slice::contains_ptr(self.0.as_slice(), element_ptr)
     }
 
     fn clear(&mut self) {
@@ -191,12 +221,12 @@ impl<T> PinnedVec<T> for TestVec<T> {
         }
     }
 
-    unsafe fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T> {
-        if index < self.0.capacity() {
-            Some(self.0.as_mut_ptr().add(index))
-        } else {
-            None
-        }
+    fn get_ptr(&self, index: usize) -> Option<*const T> {
+        (index < self.0.capacity()).then(|| unsafe { self.0.as_ptr().add(index) })
+    }
+
+    fn get_ptr_mut(&mut self, index: usize) -> Option<*mut T> {
+        (index < self.0.capacity()).then(|| unsafe { self.0.as_mut_ptr().add(index) })
     }
 
     unsafe fn set_len(&mut self, new_len: usize) {

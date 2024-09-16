@@ -10,18 +10,35 @@
 /// to find its position in the vector.
 ///
 /// Out of bounds checks are in place.
+#[inline(always)]
 pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
-    let ptr_element = element as *const T as usize;
+    index_of_ptr(slice, element as *const T)
+}
+
+/// Returns the index of the `element` with the given reference inside the `slice`.
+/// This method has *O(1)* time complexity.
+///
+/// # Safety
+///
+/// The underlying memory of the slice `&[T]` stays pinned as long as
+/// the reference is in scope; i.e., is not carried to different memory locations.
+///
+/// Therefore, it is possible and safe to compare an element's reference
+/// to find its position in the vector.
+///
+/// Out of bounds checks are in place.
+pub fn index_of_ptr<T>(slice: &[T], element_ptr: *const T) -> Option<usize> {
+    let element_ptr = element_ptr as usize;
     let ptr = slice.as_ptr();
     let ptr_beg = ptr as usize;
-    if ptr_element < ptr_beg {
+    if element_ptr < ptr_beg {
         None
     } else {
         let ptr_end = (unsafe { ptr.add(slice.len() - 1) }) as usize;
-        if ptr_element > ptr_end {
+        if element_ptr > ptr_end {
             None
         } else {
-            let diff = ptr_element - ptr_beg;
+            let diff = element_ptr - ptr_beg;
             let count = diff / core::mem::size_of::<T>();
             Some(count)
         }
@@ -41,17 +58,31 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
 ///
 /// Out of bounds checks are in place.
 pub fn contains_reference<T>(slice: &[T], element: &T) -> bool {
+    contains_ptr(slice, element as *const T)
+}
+
+/// Returns whether or not element with the given pointer belongs to the given `slice`.
+/// This method has *O(1)* time complexity.
+///
+/// # Safety
+///
+/// The underlying memory of the slice `&[T]` stays pinned as long as
+/// the reference is in scope; i.e., is not carried to different memory locations.
+///
+/// Therefore, it is possible and safe to compare an element's reference
+/// to find its position in the vector.
+///
+/// Out of bounds checks are in place.
+pub fn contains_ptr<T>(slice: &[T], element_ptr: *const T) -> bool {
     if slice.is_empty() {
         false
     } else {
-        let ptr_element = element as *const T as usize;
-        let ptr = slice.as_ptr();
-        let ptr_beg = ptr as usize;
-        if ptr_element < ptr_beg {
+        let ptr_beg = slice.as_ptr();
+        if element_ptr < ptr_beg {
             false
         } else {
-            let ptr_end = (unsafe { ptr.add(slice.len() - 1) }) as usize;
-            ptr_element <= ptr_end
+            let ptr_end = unsafe { ptr_beg.add(slice.len() - 1) };
+            element_ptr <= ptr_end
         }
     }
 }
