@@ -53,6 +53,20 @@ pub trait ConcurrentPinnedVec<T> {
     where
         T: 'a;
 
+    /// Returns an iterator over positions `range` of the vector.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe since the concurrent pinned vector might contain gaps.
+    ///
+    /// This method can safely be called if entries in all positions `range` are written.
+    unsafe fn iter_over_range<'a, R: RangeBounds<usize>>(
+        &'a self,
+        range: R,
+    ) -> impl Iterator<Item = &'a T> + 'a
+    where
+        T: 'a;
+
     /// Returns a reference to the element at the `index`-th position.
     ///
     /// # Safety

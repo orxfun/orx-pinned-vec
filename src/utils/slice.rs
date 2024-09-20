@@ -1,3 +1,5 @@
+use core::ops::RangeBounds;
+
 /// Returns the index of the `element` with the given reference inside the `slice`.
 /// This method has *O(1)* time complexity.
 ///
@@ -85,6 +87,43 @@ pub fn contains_ptr<T>(slice: &[T], element_ptr: *const T) -> bool {
             element_ptr <= ptr_end
         }
     }
+}
+
+/// Returns the inclusive being and exclusive end of the given `range`.
+/// The range is bounded by the `vec_len` if it is known and provided.
+///
+/// # Panics
+///
+/// Panics if end bound is Unbounded while vec_len is None.
+pub fn vec_range_limits<R: RangeBounds<usize>>(range: &R, vec_len: Option<usize>) -> [usize; 2] {
+    use core::ops::Bound::*;
+
+    let mut begin = match range.start_bound() {
+        Included(&a) => a,
+        Excluded(a) => a + 1,
+        Unbounded => 0,
+    };
+
+    let mut end = match range.end_bound() {
+        Excluded(&b) => b,
+        Included(b) => b + 1,
+        Unbounded => vec_len.expect("Unbounded range without a vec_len"),
+    };
+
+    if end < begin {
+        end = begin;
+    }
+
+    if let Some(len) = vec_len {
+        if begin > len {
+            begin = len;
+        }
+        if end > len {
+            end = len;
+        }
+    }
+
+    [begin, end]
 }
 
 #[cfg(test)]
