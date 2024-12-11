@@ -19,6 +19,22 @@ To be specific, let's assume that a pinned vector currently has `n` elements:
 | `pop()` | does not change the memory locations of the first `n-1` elements, the `n`-th element is removed |
 | `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
 | `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
+||
+
+Note that this eliminates a certain set of errors that are easy to make in some languages and forbidden by the borrow checker in rust. Consider, for example, the classical example that does not compile in rust. The reason this code has a bug is due to the fact that the elements of the standard vector are not pinned to their memory locations and it is possible that the `push` leads to changing them all together. Using a pinned vector, on the other hand, this would be a memory safe operation.
+
+```rust
+let mut vec = vec![0, 1, 2, 3];
+
+let ref_to_first = &vec[0];
+assert_eq!(ref_to_first, &0);
+
+vec.push(4);
+
+// does not compile due to the following reason:  cannot borrow `vec` as mutable because it is also borrowed as immutable
+// assert_eq!(ref_to_first, &0);
+```
+
 
 `PinnedVec` trait on its own cannot provide the pinned element guarantee; hence, it could be considered as a marker trait.
 

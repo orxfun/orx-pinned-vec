@@ -7,14 +7,14 @@ use orx_pseudo_default::PseudoDefault;
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
 ///
-/// => memory location of an element already pushed to the collection never changes unless any of the following mut-methods is called:
+/// => memory location of an element already pushed to the collection never changes unless any of the following `mut` methods is called:
 /// * `remove`, `pop`,
 /// * `insert`,
 /// * `clear`, `truncate`.
 ///
 /// In other words,
 ///
-/// => the mut-methods `push` or `extend_from_slice` do <ins>not</ins> change memory locations of already added elements.
+/// => growth methods `push` or `extend_from_slice` do <ins>not</ins> change memory locations of already added elements.
 ///
 /// # Pinned Elements Guarantee
 ///
@@ -38,16 +38,19 @@ pub trait PinnedVec<T>:
     where
         T: 'a,
         Self: 'a;
+
     /// Iterator yielding mutable references to the elements of the vector.
     type IterMut<'a>: Iterator<Item = &'a mut T>
     where
         T: 'a,
         Self: 'a;
+
     /// Iterator yielding references to the elements of the vector.
     type IterRev<'a>: Iterator<Item = &'a T>
     where
         T: 'a,
         Self: 'a;
+
     /// Iterator yielding mutable references to the elements of the vector.
     type IterMutRev<'a>: Iterator<Item = &'a mut T>
     where
