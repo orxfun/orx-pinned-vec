@@ -12,6 +12,10 @@ use alloc::vec::Vec;
 ///   * *However, **insert** method is not covered since it is not an addition to the end of the vector.*
 ///   * *Notice that the standard vector does not satisfy this requirement.*
 ///   * *For many special data structures, such as concurrent collections or self referential collections, this is the necessary and sufficient pinned element guarantee.*
+///
+/// # Panics
+///
+/// Panics if the pinned vector implementation `P` does not satisfy the abovementioned pinned elements guarantee.
 pub fn extend<P: PinnedVec<usize> + Sized>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();

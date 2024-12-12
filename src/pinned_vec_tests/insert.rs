@@ -8,6 +8,10 @@ use crate::PinnedVec;
 ///
 /// * **G3: pinned prior elements on insertions to arbitrary position**. Assume we are adding **m** ≥ 1 elements; however, not necessarily to the end of the vector this time. The earliest position of the inserted elements is **p** < (n-1). In this case, pinned vector guarantees that memory locations of the elements at positions 0..(p-1) will remain intact.
 ///   * *The example method is the **insert** method.*
+///
+/// # Panics
+///
+/// Panics if the pinned vector implementation `P` does not satisfy the abovementioned pinned elements guarantee.
 pub fn insert<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();

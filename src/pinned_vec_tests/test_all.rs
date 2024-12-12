@@ -10,6 +10,10 @@ use crate::PinnedVec;
 /// * `pinned.pop()`: does not change the memory locations of the first `n-1` elements (the n-th element will be removed);
 /// * `pinned.remove(a)`: does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed (commonly shifted to left).
 /// * `pinned.truncate(a)`: does not change the memory locations of the first `a` elements, where `a < n`.
+///
+/// # Panics
+///
+/// Panics if the pinned vector implementation `P` does not satisfy pinned elements guarantees.
 pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) {
     let pinned_vec = super::push::push(pinned_vec, test_vec_len);
     let pinned_vec = super::extend::extend(pinned_vec, test_vec_len);
