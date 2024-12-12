@@ -1,6 +1,13 @@
 use super::refmap::RefMap;
 use crate::PinnedVec;
 
+/// Tests the pinned vector guarantee on removing elements from the end;
+/// panics if the pinned vector implementation `P` does not satisfy the required condition.
+///
+/// Tested pinned element guarantee:
+///
+/// * **G2: pinned elements on removals from the end**. In this case, we are removing **m** ∈ [1, n] elements from the end of the vector leading to the final vector length of **n - m**. Pinned vector guarantees that memory locations of these remaining **n - m** elements do not change.
+///   * *Some such example methods are **pop**, **truncate** or **clear**.*
 pub fn truncate<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();

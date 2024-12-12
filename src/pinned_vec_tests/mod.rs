@@ -6,7 +6,7 @@ mod push;
 mod refmap;
 mod remove;
 mod slices;
-pub mod test_all;
+mod test_all;
 mod truncate;
 mod unsafe_writer;
 
@@ -14,3 +14,11 @@ mod unsafe_writer;
 mod helpers;
 #[cfg(test)]
 pub(crate) mod testvec;
+
+pub use extend::extend;
+pub use insert::insert;
+pub use pop::pop;
+pub use push::push;
+pub use remove::remove;
+pub use test_all::test_pinned_vec;
+pub use truncate::truncate;
