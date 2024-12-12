@@ -8,6 +8,10 @@ use crate::PinnedVec;
 ///
 /// * **G2: pinned elements on removals from the end**. In this case, we are removing **m** ∈ [1, n] elements from the end of the vector leading to the final vector length of **n - m**. Pinned vector guarantees that memory locations of these remaining **n - m** elements do not change.
 ///   * *Some such example methods are **pop**, **truncate** or **clear**.*
+///
+/// # Panics
+///
+/// Panics if the pinned vector implementation `P` does not satisfy the abovementioned pinned elements guarantee.
 pub fn pop<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();
