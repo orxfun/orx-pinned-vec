@@ -1,33 +1,27 @@
-use super::helpers::range::{range_end, range_start};
-use crate::*;
-use alloc::vec::Vec;
-use core::{
+use orx_pinned_vec::*;
+use orx_pseudo_default::PseudoDefault;
+use std::{
     cmp::Ordering,
     iter::Rev,
-    ops::{Index, IndexMut, RangeBounds},
+    ops::{Bound, Index, IndexMut, RangeBounds},
 };
-use orx_pseudo_default::PseudoDefault;
 
-pub struct TestVec<T>(Vec<T>);
+pub struct StdVec<T>(Vec<T>);
 
-impl<T> PseudoDefault for TestVec<T> {
+impl<T> PseudoDefault for StdVec<T> {
     fn pseudo_default() -> Self {
         Self(Default::default())
     }
 }
 
-impl<T> TestVec<T> {
+impl<T> StdVec<T> {
     #[cfg(test)]
     pub fn new(capacity: usize) -> Self {
         Self(Vec::with_capacity(capacity))
     }
-
-    fn assert_has_room(&self, required_additional_space: usize) {
-        assert!(PinnedVec::len(self) + required_additional_space <= self.0.capacity())
-    }
 }
 
-impl<T> Index<usize> for TestVec<T> {
+impl<T> Index<usize> for StdVec<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -35,13 +29,13 @@ impl<T> Index<usize> for TestVec<T> {
     }
 }
 
-impl<T> IndexMut<usize> for TestVec<T> {
+impl<T> IndexMut<usize> for StdVec<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.0[index]
     }
 }
 
-impl<T> IntoIterator for TestVec<T> {
+impl<T> IntoIterator for StdVec<T> {
     type Item = T;
     type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
     fn into_iter(self) -> Self::IntoIter {
@@ -49,7 +43,7 @@ impl<T> IntoIterator for TestVec<T> {
     }
 }
 
-impl<T> PinnedVec<T> for TestVec<T> {
+impl<T> PinnedVec<T> for StdVec<T> {
     type Iter<'a>
         = core::slice::Iter<'a, T>
     where
@@ -135,7 +129,6 @@ impl<T> PinnedVec<T> for TestVec<T> {
     where
         T: Clone,
     {
-        self.assert_has_room(other.len());
         self.0.extend_from_slice(other)
     }
 
@@ -176,12 +169,10 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     fn push(&mut self, value: T) {
-        self.assert_has_room(1);
         self.0.push(value)
     }
 
     fn insert(&mut self, index: usize, element: T) {
-        self.assert_has_room(1);
         self.0.insert(index, element)
     }
 
@@ -285,4 +276,98 @@ impl<T> PinnedVec<T> for TestVec<T> {
     {
         self.0.sort_by_key(f)
     }
+}
+
+fn range_start<R: RangeBounds<usize>>(range: &R) -> usize {
+    match range.start_bound() {
+        Bound::Excluded(x) => x + 1,
+        Bound::Included(x) => *x,
+        Bound::Unbounded => 0,
+    }
+}
+fn range_end<R: RangeBounds<usize>>(range: &R, vec_len: usize) -> usize {
+    match range.end_bound() {
+        Bound::Excluded(x) => *x,
+        Bound::Included(x) => x + 1,
+        Bound::Unbounded => vec_len,
+    }
+}
+
+// PINNED ELEMENT TESTS
+
+#[test]
+fn std_vec_extend_with_capacity() {
+    pinned_vec_tests::extend(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_extend() {
+    pinned_vec_tests::extend(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_insert_with_capacity() {
+    pinned_vec_tests::insert(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_insert() {
+    pinned_vec_tests::insert(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_pop_with_capacity() {
+    pinned_vec_tests::pop(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_pop() {
+    pinned_vec_tests::pop(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_push_with_capacity() {
+    pinned_vec_tests::push(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_push() {
+    pinned_vec_tests::push(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_remove_with_capacity() {
+    pinned_vec_tests::remove(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_remove() {
+    pinned_vec_tests::remove(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_truncate_with_capacity() {
+    pinned_vec_tests::truncate(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_truncate() {
+    pinned_vec_tests::truncate(StdVec(Vec::new()), 64 * 1024);
+}
+
+#[test]
+fn std_vec_all_with_capacity() {
+    pinned_vec_tests::test_pinned_vec(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+}
+
+#[test]
+#[should_panic]
+fn std_vec_all() {
+    pinned_vec_tests::test_pinned_vec(StdVec(Vec::new()), 64 * 1024);
 }

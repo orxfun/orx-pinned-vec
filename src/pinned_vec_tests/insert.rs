@@ -1,9 +1,18 @@
 use super::refmap::RefMap;
 use crate::PinnedVec;
 
+/// Tests the pinned vector guarantee on removing elements from arbitrary positions;
+/// panics if the pinned vector implementation `P` does not satisfy the required condition.
+///
+/// Tested pinned element guarantee:
+///
+/// * **G3: pinned prior elements on insertions to arbitrary position**. Assume we are adding **m** ≥ 1 elements; however, not necessarily to the end of the vector this time. The earliest position of the inserted elements is **p** < (n-1). In this case, pinned vector guarantees that memory locations of the elements at positions 0..(p-1) will remain intact.
+///   * *The example method is the **insert** method.*
 pub fn insert<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();
+
+    // insert at the end
 
     let first_half = max_allowed_test_len / 2;
 

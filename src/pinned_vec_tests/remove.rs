@@ -1,6 +1,13 @@
 use super::refmap::RefMap;
 use crate::PinnedVec;
 
+/// Tests the pinned vector guarantee on removing elements from arbitrary positions;
+/// panics if the pinned vector implementation `P` does not satisfy the required condition.
+///
+/// Tested pinned element guarantee:
+///
+/// * **G4: pinned prior elements in removals from arbitrary position**. Lastly, assume that we are removing **m** ∈ [1, n] elements from the arbitrary positions of the vector leading to a final vector length of **n - m**. Let **p** be the earliest position of the removed elements. Pinned vector then guarantees that memory locations of the elements at positions 0..(p-1) will remain intact.
+///   * *The example method is the **remove** method.*
 pub fn remove<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -> P {
     let mut vec = pinned_vec;
     vec.clear();

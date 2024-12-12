@@ -75,12 +75,36 @@ mod tests {
     }
 
     impl<T> PinnedVec<T> for JustVec<T> {
-        type Iter<'a> = core::slice::Iter<'a, T> where T: 'a, Self: 'a;
-        type IterMut<'a> = core::slice::IterMut<'a, T> where T: 'a, Self: 'a;
-        type IterRev<'a> = Rev<core::slice::Iter<'a, T>> where T: 'a, Self: 'a;
-        type IterMutRev<'a> = Rev<core::slice::IterMut<'a, T>> where T: 'a, Self: 'a;
-        type SliceIter<'a> = Option<&'a [T]> where T: 'a, Self: 'a;
-        type SliceMutIter<'a> = Option<&'a mut [T]> where T: 'a, Self: 'a;
+        type Iter<'a>
+            = core::slice::Iter<'a, T>
+        where
+            T: 'a,
+            Self: 'a;
+        type IterMut<'a>
+            = core::slice::IterMut<'a, T>
+        where
+            T: 'a,
+            Self: 'a;
+        type IterRev<'a>
+            = Rev<core::slice::Iter<'a, T>>
+        where
+            T: 'a,
+            Self: 'a;
+        type IterMutRev<'a>
+            = Rev<core::slice::IterMut<'a, T>>
+        where
+            T: 'a,
+            Self: 'a;
+        type SliceIter<'a>
+            = Option<&'a [T]>
+        where
+            T: 'a,
+            Self: 'a;
+        type SliceMutIter<'a>
+            = Option<&'a mut [T]>
+        where
+            T: 'a,
+            Self: 'a;
 
         fn index_of(&self, data: &T) -> Option<usize> {
             crate::utils::slice::index_of(&self.0, data)
