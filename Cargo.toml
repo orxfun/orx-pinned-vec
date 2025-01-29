@@ -10,4 +10,5 @@ keywords = ["vec", "array", "vector", "pinned", "memory"]
 categories = ["data-structures", "rust-patterns", "no-std"]
 
 [dependencies]
+orx-iterable = { version = "1.1.1", default-features = false }
 orx-pseudo-default = { version = "1.4", default-features = false }

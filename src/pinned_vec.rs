@@ -3,6 +3,7 @@ use core::{
     cmp::Ordering,
     ops::{Index, IndexMut, RangeBounds},
 };
+use orx_iterable::{Collection, CollectionMut};
 use orx_pseudo_default::PseudoDefault;
 
 /// Trait for vector representations differing from `std::vec::Vec` by the following:
@@ -31,20 +32,13 @@ use orx_pseudo_default::PseudoDefault;
 /// | `remove(a)` | does not change the memory locations of the first `a` elements, where `a < n`; elements to the right of the removed element might be changed, commonly shifted to left |
 /// | `truncate(a)` | does not change the memory locations of the first `a` elements, where `a < n` |
 pub trait PinnedVec<T>:
-    IntoIterator<Item = T> + PseudoDefault + Index<usize, Output = T> + IndexMut<usize, Output = T>
+    IntoIterator<Item = T>
+    + Collection<Item = T>
+    + CollectionMut<Item = T>
+    + PseudoDefault
+    + Index<usize, Output = T>
+    + IndexMut<usize, Output = T>
 {
-    /// Iterator yielding references to the elements of the vector.
-    type Iter<'a>: Iterator<Item = &'a T>
-    where
-        T: 'a,
-        Self: 'a;
-
-    /// Iterator yielding mutable references to the elements of the vector.
-    type IterMut<'a>: Iterator<Item = &'a mut T>
-    where
-        T: 'a,
-        Self: 'a;
-
     /// Iterator yielding references to the elements of the vector.
     type IterRev<'a>: Iterator<Item = &'a T>
     where
@@ -266,10 +260,6 @@ pub trait PinnedVec<T>:
     /// effect.
     fn truncate(&mut self, len: usize);
 
-    /// Returns an iterator to elements of the vector.
-    fn iter(&self) -> Self::Iter<'_>;
-    /// Returns an iterator of mutable references to elements of the vector.
-    fn iter_mut(&mut self) -> Self::IterMut<'_>;
     /// Returns a reversed back-to-front iterator to elements of the vector.
     fn iter_rev(&self) -> Self::IterRev<'_>;
     /// Returns a reversed back-to-front iterator mutable references to elements of the vector.
