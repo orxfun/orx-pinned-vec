@@ -6,6 +6,7 @@ use core::{
     iter::Rev,
     ops::{Index, IndexMut, RangeBounds},
 };
+use orx_iterable::Collection;
 use orx_pseudo_default::PseudoDefault;
 
 pub struct TestVec<T>(Vec<T>);
@@ -49,17 +50,27 @@ impl<T> IntoIterator for TestVec<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a TestVec<T> {
+    type Item = &'a T;
+
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut TestVec<T> {
+    type Item = &'a mut T;
+
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
 impl<T> PinnedVec<T> for TestVec<T> {
-    type Iter<'a>
-        = core::slice::Iter<'a, T>
-    where
-        T: 'a,
-        Self: 'a;
-    type IterMut<'a>
-        = core::slice::IterMut<'a, T>
-    where
-        T: 'a,
-        Self: 'a;
     type IterRev<'a>
         = Rev<core::slice::Iter<'a, T>>
     where
@@ -199,14 +210,6 @@ impl<T> PinnedVec<T> for TestVec<T> {
 
     fn truncate(&mut self, len: usize) {
         self.0.truncate(len)
-    }
-
-    fn iter(&self) -> Self::Iter<'_> {
-        self.0.iter()
-    }
-
-    fn iter_mut(&mut self) -> Self::IterMut<'_> {
-        self.0.iter_mut()
     }
 
     fn iter_rev(&self) -> Self::IterRev<'_> {
