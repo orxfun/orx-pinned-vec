@@ -39,7 +39,7 @@ mod tests {
         iter::Rev,
         ops::{Index, IndexMut, RangeBounds},
     };
-    use orx_iterable::Collection;
+    use orx_iterable::{Collection, Iterable};
     use orx_pseudo_default::PseudoDefault;
 
     #[derive(Debug)]
@@ -275,6 +275,38 @@ mod tests {
                     _ => Some(&mut self.0[a..b]),
                 },
             }
+        }
+
+        fn iter_over<'a>(
+            &'a self,
+            range: impl RangeBounds<usize>,
+        ) -> impl ExactSizeIterator<Item = &'a T>
+        where
+            T: 'a,
+        {
+            use core::cmp::{max, min};
+
+            let len = PinnedVec::len(self);
+            let a = min(len, range_start(&range));
+            let b = max(a, min(len, range_end(&range, len)));
+
+            self.0[a..b].iter()
+        }
+
+        fn iter_mut_over<'a>(
+            &'a mut self,
+            range: impl RangeBounds<usize>,
+        ) -> impl ExactSizeIterator<Item = &'a mut T>
+        where
+            T: 'a,
+        {
+            use core::cmp::{max, min};
+
+            let len = PinnedVec::len(self);
+            let a = min(len, range_start(&range));
+            let b = max(a, min(len, range_end(&range, len)));
+
+            self.0[a..b].iter_mut()
         }
 
         fn get_ptr(&self, index: usize) -> Option<*const T> {

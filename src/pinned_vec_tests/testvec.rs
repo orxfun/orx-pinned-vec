@@ -248,6 +248,38 @@ impl<T> PinnedVec<T> for TestVec<T> {
         }
     }
 
+    fn iter_over<'a>(
+        &'a self,
+        range: impl RangeBounds<usize>,
+    ) -> impl ExactSizeIterator<Item = &'a T>
+    where
+        T: 'a,
+    {
+        use core::cmp::{max, min};
+
+        let len = PinnedVec::len(self);
+        let a = min(len, range_start(&range));
+        let b = max(a, min(len, range_end(&range, len)));
+
+        self.0[a..b].iter()
+    }
+
+    fn iter_mut_over<'a>(
+        &'a mut self,
+        range: impl RangeBounds<usize>,
+    ) -> impl ExactSizeIterator<Item = &'a mut T>
+    where
+        T: 'a,
+    {
+        use core::cmp::{max, min};
+
+        let len = PinnedVec::len(self);
+        let a = min(len, range_start(&range));
+        let b = max(a, min(len, range_end(&range, len)));
+
+        self.0[a..b].iter_mut()
+    }
+
     fn get_ptr(&self, index: usize) -> Option<*const T> {
         (index < self.0.capacity()).then(|| unsafe { self.0.as_ptr().add(index) })
     }
