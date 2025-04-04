@@ -30,8 +30,9 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 mod tests {
     use super::*;
     use crate::{
+        CapacityState,
         pinned_vec_tests::helpers::range::{range_end, range_start},
-        utils, CapacityState,
+        utils,
     };
     use alloc::vec::Vec;
     use core::{
@@ -39,7 +40,7 @@ mod tests {
         iter::Rev,
         ops::{Index, IndexMut, RangeBounds},
     };
-    use orx_iterable::{Collection, Iterable};
+    use orx_iterable::Collection;
     use orx_pseudo_default::PseudoDefault;
 
     #[derive(Debug)]
@@ -188,11 +189,11 @@ mod tests {
         }
 
         unsafe fn get_unchecked(&self, index: usize) -> &T {
-            self.0.get_unchecked(index)
+            unsafe { self.0.get_unchecked(index) }
         }
 
         unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-            self.0.get_unchecked_mut(index)
+            unsafe { self.0.get_unchecked_mut(index) }
         }
 
         fn first(&self) -> Option<&T> {
@@ -318,7 +319,7 @@ mod tests {
         }
 
         unsafe fn set_len(&mut self, new_len: usize) {
-            self.0.set_len(new_len)
+            unsafe { self.0.set_len(new_len) }
         }
 
         fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>

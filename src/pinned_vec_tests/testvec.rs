@@ -159,11 +159,11 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     unsafe fn get_unchecked(&self, index: usize) -> &T {
-        self.0.get_unchecked(index)
+        unsafe { self.0.get_unchecked(index) }
     }
 
     unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.0.get_unchecked_mut(index)
+        unsafe { self.0.get_unchecked_mut(index) }
     }
 
     fn first(&self) -> Option<&T> {
@@ -289,7 +289,7 @@ impl<T> PinnedVec<T> for TestVec<T> {
     }
 
     unsafe fn set_len(&mut self, new_len: usize) {
-        self.0.set_len(new_len)
+        unsafe { self.0.set_len(new_len) }
     }
 
     fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>
