@@ -6,6 +6,8 @@
 
 `PinnedVec` trait defines the interface for vectors which guarantee that elements added to the vector are pinned to their memory locations unless explicitly changed.
 
+> This crate is **no-std** by default.
+
 ## Pinned Elements Guarantees
 
 A `PinnedVec` guarantees that positions of its elements **do not change implicitly**.

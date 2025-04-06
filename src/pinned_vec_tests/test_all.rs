@@ -30,8 +30,9 @@ pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) 
 mod tests {
     use super::*;
     use crate::{
+        CapacityState,
         pinned_vec_tests::helpers::range::{range_end, range_start},
-        utils, CapacityState,
+        utils,
     };
     use alloc::vec::Vec;
     use core::{
@@ -188,11 +189,11 @@ mod tests {
         }
 
         unsafe fn get_unchecked(&self, index: usize) -> &T {
-            self.0.get_unchecked(index)
+            unsafe { self.0.get_unchecked(index) }
         }
 
         unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-            self.0.get_unchecked_mut(index)
+            unsafe { self.0.get_unchecked_mut(index) }
         }
 
         fn first(&self) -> Option<&T> {
@@ -277,6 +278,38 @@ mod tests {
             }
         }
 
+        fn iter_over<'a>(
+            &'a self,
+            range: impl RangeBounds<usize>,
+        ) -> impl ExactSizeIterator<Item = &'a T>
+        where
+            T: 'a,
+        {
+            use core::cmp::{max, min};
+
+            let len = PinnedVec::len(self);
+            let a = min(len, range_start(&range));
+            let b = max(a, min(len, range_end(&range, len)));
+
+            self.0[a..b].iter()
+        }
+
+        fn iter_mut_over<'a>(
+            &'a mut self,
+            range: impl RangeBounds<usize>,
+        ) -> impl ExactSizeIterator<Item = &'a mut T>
+        where
+            T: 'a,
+        {
+            use core::cmp::{max, min};
+
+            let len = PinnedVec::len(self);
+            let a = min(len, range_start(&range));
+            let b = max(a, min(len, range_end(&range, len)));
+
+            self.0[a..b].iter_mut()
+        }
+
         fn get_ptr(&self, index: usize) -> Option<*const T> {
             (index < self.0.capacity()).then(|| unsafe { self.0.as_ptr().add(index) })
         }
@@ -286,7 +319,7 @@ mod tests {
         }
 
         unsafe fn set_len(&mut self, new_len: usize) {
-            self.0.set_len(new_len)
+            unsafe { self.0.set_len(new_len) }
         }
 
         fn binary_search_by<F>(&self, f: F) -> Result<usize, usize>
@@ -317,6 +350,10 @@ mod tests {
         {
             self.0.sort_by_key(f)
         }
+
+        fn capacity_bound(&self) -> usize {
+            usize::MAX
+        }
     }
 
     #[test]
@@ -327,7 +364,11 @@ mod tests {
 
     #[test]
     fn within_capacity_vec_passes() {
+        #[cfg(not(miri))]
         let capacity = 129;
+        #[cfg(miri)]
+        let capacity = 29;
+
         let vec = JustVec(Vec::with_capacity(capacity));
         test_pinned_vec(vec, capacity);
     }

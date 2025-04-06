@@ -12,6 +12,18 @@ pub trait ConcurrentPinnedVec<T> {
     /// Type of the wrapped pinned vector.
     type P: PinnedVec<T>;
 
+    /// Iterator yielding slices corresponding to a range of indices, returned by the `slice` method.
+    type SliceIter<'a>: IntoIterator<Item = &'a [T]> + Default
+    where
+        T: 'a,
+        Self: 'a;
+
+    /// Iterator yielding mutable slices corresponding to a range of indices, returned by the `slice_mut` and `slice_mut_unchecked` methods.
+    type SliceMutIter<'a>: IntoIterator<Item = &'a mut [T]> + Default
+    where
+        T: 'a,
+        Self: 'a;
+
     /// Converts back to the underlying pinned vector with the given length.
     ///
     /// # Safety
@@ -90,13 +102,10 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// This method is used to write to the vector.
     /// Therefore, the positions will initially be uninitialized; hence, reading from the slices might result in UB.
-    unsafe fn slices_mut<R: RangeBounds<usize>>(
-        &self,
-        range: R,
-    ) -> <Self::P as PinnedVec<T>>::SliceMutIter<'_>;
+    unsafe fn slices_mut<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceMutIter<'_>;
 
     /// Returns an iterator of slices to the elements extending over positions `range` of the vector.
-    fn slices<R: RangeBounds<usize>>(&self, range: R) -> <Self::P as PinnedVec<T>>::SliceIter<'_>;
+    fn slices<R: RangeBounds<usize>>(&self, range: R) -> Self::SliceIter<'_>;
 
     // capacity
 

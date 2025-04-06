@@ -277,6 +277,36 @@ pub trait PinnedVec<T>:
     /// * returns an iterator yielding ordered slices that forms the required range when chained.
     fn slices_mut<R: RangeBounds<usize>>(&mut self, range: R) -> Self::SliceMutIter<'_>;
 
+    /// Creates an exact size iterator for elements over the given `range`.
+    ///
+    /// This method can be considered as a generalization of creating a slice of a vector
+    /// such that it does not necessarily return a contagious slice of elements. It might
+    /// as well return a sequence of multiple slices, as long as the elements are positioned
+    /// at the given `range` of indices.
+    ///
+    /// [`Vec::slice`]: std::vec::Vec::slice
+    fn iter_over<'a>(
+        &'a self,
+        range: impl RangeBounds<usize>,
+    ) -> impl ExactSizeIterator<Item = &'a T>
+    where
+        T: 'a;
+
+    /// Creates a mutable exact size iterator for elements over the given `range`.
+    ///
+    /// This method can be considered as a generalization of creating a mutable slice of a vector
+    /// such that it does not necessarily return a contagious slice of elements. It might
+    /// as well return a sequence of multiple slices, as long as the elements are positioned
+    /// at the given `range` of indices.
+    ///
+    /// [`Vec::slice`]: std::vec::Vec::slice
+    fn iter_mut_over<'a>(
+        &'a mut self,
+        range: impl RangeBounds<usize>,
+    ) -> impl ExactSizeIterator<Item = &'a mut T>
+    where
+        T: 'a;
+
     /// Returns a pointer to the `index`-th element of the vector.
     ///
     /// Returns `None` if `index`-th position does not belong to the vector; i.e., if `index` is out of `capacity`.
@@ -443,11 +473,14 @@ pub trait PinnedVec<T>:
     where
         F: FnMut(&T) -> K,
         K: Ord;
+
+    /// Returns the maximum possible capacity that the vector can grow to.
+    fn capacity_bound(&self) -> usize;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{pinned_vec_tests::testvec::TestVec, PinnedVec};
+    use crate::{PinnedVec, pinned_vec_tests::testvec::TestVec};
 
     #[test]
     fn is_empty() {

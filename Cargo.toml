@@ -1,7 +1,7 @@
 [package]
 name = "orx-pinned-vec"
-version = "3.15.0"
-edition = "2021"
+version = "3.16.0"
+edition = "2024"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "`PinnedVec` trait defines the interface for vectors which guarantee that elements added to the vector are pinned to their memory locations unless explicitly changed."
 license = "MIT OR Apache-2.0"
@@ -10,5 +10,5 @@ keywords = ["vec", "array", "vector", "pinned", "memory"]
 categories = ["data-structures", "rust-patterns", "no-std"]
 
 [dependencies]
-orx-iterable = { version = "1.2.0", default-features = false }
-orx-pseudo-default = { version = "2.0.0", default-features = false }
+orx-iterable = { version = "1.3.0", default-features = false }
+orx-pseudo-default = { version = "2.1.0", default-features = false }

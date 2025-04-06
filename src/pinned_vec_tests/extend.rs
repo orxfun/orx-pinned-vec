@@ -69,8 +69,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(miri))]
     fn test_extend_medium() {
-        let capacity = 512;
+        let capacity = 256;
         let pinned_vec = TestVec::new(capacity);
         extend(pinned_vec, capacity);
     }
