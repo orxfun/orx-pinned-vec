@@ -334,79 +334,84 @@ fn range_end<R: RangeBounds<usize>>(range: &R, vec_len: usize) -> usize {
 
 // PINNED ELEMENT TESTS
 
+#[cfg(not(miri))]
+const N: usize = 64 * 1024;
+#[cfg(miri)]
+const N: usize = 256;
+
 #[test]
 fn std_vec_extend_with_capacity() {
-    pinned_vec_tests::extend(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::extend(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_extend() {
-    pinned_vec_tests::extend(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::extend(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_insert_with_capacity() {
-    pinned_vec_tests::insert(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::insert(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_insert() {
-    pinned_vec_tests::insert(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::insert(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_pop_with_capacity() {
-    pinned_vec_tests::pop(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::pop(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_pop() {
-    pinned_vec_tests::pop(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::pop(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_push_with_capacity() {
-    pinned_vec_tests::push(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::push(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_push() {
-    pinned_vec_tests::push(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::push(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_remove_with_capacity() {
-    pinned_vec_tests::remove(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::remove(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_remove() {
-    pinned_vec_tests::remove(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::remove(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_truncate_with_capacity() {
-    pinned_vec_tests::truncate(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::truncate(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_truncate() {
-    pinned_vec_tests::truncate(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::truncate(StdVec(Vec::new()), N);
 }
 
 #[test]
 fn std_vec_all_with_capacity() {
-    pinned_vec_tests::test_pinned_vec(StdVec(Vec::with_capacity(64 * 1024)), 64 * 1024);
+    pinned_vec_tests::test_pinned_vec(StdVec(Vec::with_capacity(N)), N);
 }
 
 #[test]
 #[should_panic]
 fn std_vec_all() {
-    pinned_vec_tests::test_pinned_vec(StdVec(Vec::new()), 64 * 1024);
+    pinned_vec_tests::test_pinned_vec(StdVec(Vec::new()), N);
 }
