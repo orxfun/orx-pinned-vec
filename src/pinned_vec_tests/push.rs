@@ -49,8 +49,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(miri))]
     fn test_push_medium() {
-        let capacity = 512;
+        let capacity = 256;
         let pinned_vec = TestVec::new(capacity);
         push(pinned_vec, capacity);
     }

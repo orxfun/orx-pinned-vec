@@ -52,6 +52,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(miri))]
     fn test_truncate_medium() {
         let capacity = 512;
         let pinned_vec = TestVec::new(capacity);

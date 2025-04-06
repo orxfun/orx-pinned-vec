@@ -55,6 +55,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(miri))]
     fn test_insert_medium() {
         let capacity = 256;
         let pinned_vec = TestVec::new(capacity);
