@@ -364,7 +364,11 @@ mod tests {
 
     #[test]
     fn within_capacity_vec_passes() {
+        #[cfg(not(miri))]
         let capacity = 129;
+        #[cfg(miri)]
+        let capacity = 29;
+
         let vec = JustVec(Vec::with_capacity(capacity));
         test_pinned_vec(vec, capacity);
     }
