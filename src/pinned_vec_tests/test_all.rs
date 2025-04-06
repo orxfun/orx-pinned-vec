@@ -350,6 +350,10 @@ mod tests {
         {
             self.0.sort_by_key(f)
         }
+
+        fn capacity_bound(&self) -> usize {
+            usize::MAX
+        }
     }
 
     #[test]

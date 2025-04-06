@@ -311,6 +311,10 @@ impl<T> PinnedVec<T> for StdVec<T> {
     {
         self.0.sort_by_key(f)
     }
+
+    fn capacity_bound(&self) -> usize {
+        usize::MAX
+    }
 }
 
 fn range_start<R: RangeBounds<usize>>(range: &R) -> usize {

@@ -473,11 +473,14 @@ pub trait PinnedVec<T>:
     where
         F: FnMut(&T) -> K,
         K: Ord;
+
+    /// Returns the maximum possible capacity that the vector can grow to.
+    fn capacity_bound(&self) -> usize;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{pinned_vec_tests::testvec::TestVec, PinnedVec};
+    use crate::{PinnedVec, pinned_vec_tests::testvec::TestVec};
 
     #[test]
     fn is_empty() {
