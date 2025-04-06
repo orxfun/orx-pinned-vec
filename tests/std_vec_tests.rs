@@ -337,7 +337,7 @@ fn range_end<R: RangeBounds<usize>>(range: &R, vec_len: usize) -> usize {
 #[cfg(not(miri))]
 const N: usize = 64 * 1024;
 #[cfg(miri)]
-const N: usize = 256;
+const N: usize = 56;
 
 #[test]
 fn std_vec_extend_with_capacity() {
