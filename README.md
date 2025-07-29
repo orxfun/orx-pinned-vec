@@ -44,7 +44,7 @@ vec.push(4);
 
 An example data structure relying on pinned vector guarantees to enable immutable push operation is the [ImpVec](https://crates.io/crates/orx-imp-vec) which is also discussed in this [article](https://orxfun.github.io/orxfun-notes/#/imp-vec-motivation-2024-10-03).
 
-Furthermore, self-referential-collections following thin references rather than wide pointers or index numbers rely on the consistency of memory positions of its elements. Pinned vectors again come in very useful for them. You may find an efficient and capable [LinkedList](https://crates.io/crates/orx-linked-list) implementation built on top of the pinned element guarantees.
+Furthermore, self-referential-collections following thin references rather than wide pointers or index numbers rely on the consistency of memory positions of its elements. Pinned vectors again come in very useful for them. You may find efficient [LinkedList](https://crates.io/crates/orx-linked-list) and [Tree](https://crates.io/crates/orx-tree) implementations built on top of the pinned element guarantees.
 
 Finally, it is easy to observe that pinned element guarantees make it extremely more convenient and safer to achieve data structures which enable concurrent growth. There are various concurrent data structures relying on pinned vectors, such as [ConcurrentVec](https://crates.io/crates/orx-concurrent-vec), [ConcurrentBag](https://crates.io/crates/orx-concurrent-bag) and [ConcurrentOrderedBag](https://crates.io/crates/orx-concurrent-ordered-bag). These concurrent collections play an essential role in efficiently collecting results of a parallel computation by the parallel iterator [Par](https://crates.io/crates/orx-parallel).
 
