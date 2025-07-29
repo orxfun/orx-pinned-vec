@@ -283,8 +283,6 @@ pub trait PinnedVec<T>:
     /// such that it does not necessarily return a contagious slice of elements. It might
     /// as well return a sequence of multiple slices, as long as the elements are positioned
     /// at the given `range` of indices.
-    ///
-    /// [`Vec::slice`]: std::vec::Vec::slice
     fn iter_over<'a>(
         &'a self,
         range: impl RangeBounds<usize>,
@@ -298,8 +296,6 @@ pub trait PinnedVec<T>:
     /// such that it does not necessarily return a contagious slice of elements. It might
     /// as well return a sequence of multiple slices, as long as the elements are positioned
     /// at the given `range` of indices.
-    ///
-    /// [`Vec::slice`]: std::vec::Vec::slice
     fn iter_mut_over<'a>(
         &'a mut self,
         range: impl RangeBounds<usize>,
