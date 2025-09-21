@@ -228,4 +228,9 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// This method can safely be called if entries in all positions `0..len` are written.
     unsafe fn clear(&mut self, len: usize);
+
+    unsafe fn ptr_iter_unchecked(
+        &self,
+        range: Range<usize>,
+    ) -> impl ExactSizeIterator<Item = *mut T>;
 }
