@@ -24,6 +24,9 @@ pub trait ConcurrentPinnedVec<T> {
         T: 'a,
         Self: 'a;
 
+    /// Iterator yielding pointers to elements of the vector.
+    type PtrIter: ExactSizeIterator<Item = *mut T>;
+
     /// Converts back to the underlying pinned vector with the given length.
     ///
     /// # Safety
@@ -247,8 +250,5 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// In brief, it is safe to use this method provided that the caller guarantees
     /// that the range is in bounds.
-    unsafe fn ptr_iter_unchecked(
-        &self,
-        range: Range<usize>,
-    ) -> impl ExactSizeIterator<Item = *mut T>;
+    unsafe fn ptr_iter_unchecked(&self, range: Range<usize>) -> Self::PtrIter;
 }
