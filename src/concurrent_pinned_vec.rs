@@ -24,6 +24,11 @@ pub trait ConcurrentPinnedVec<T> {
         T: 'a,
         Self: 'a;
 
+    /// Iterator yielding pointers to elements of the vector.
+    type PtrIter<'a>: ExactSizeIterator<Item = *mut T>
+    where
+        Self: 'a;
+
     /// Converts back to the underlying pinned vector with the given length.
     ///
     /// # Safety
@@ -228,4 +233,24 @@ pub trait ConcurrentPinnedVec<T> {
     ///
     /// This method can safely be called if entries in all positions `0..len` are written.
     unsafe fn clear(&mut self, len: usize);
+
+    /// Returns an iterator yielding pointers to elements within the given `range`.
+    ///
+    /// # SAFETY
+    ///
+    /// The method is marked unsafe due to the possibility of `range` being out of bounds.
+    /// This method does not perform a bounds check and it leads to UB if the range is
+    /// out of bounds.
+    ///
+    /// Returned iterator is created from a shared reference to the vec.
+    /// Therefore, the vec, cannot be mutated while using the iterator.
+    ///
+    /// Further, since the iterator is created using a shared reference to the vec,
+    /// it cannot outlive the vec.
+    ///
+    /// These guarantee that all pointers that the iterator yields will be valid.
+    ///
+    /// In brief, it is safe to use this method provided that the caller guarantees
+    /// that the range is in bounds.
+    unsafe fn ptr_iter_unchecked(&self, range: Range<usize>) -> Self::PtrIter<'_>;
 }
