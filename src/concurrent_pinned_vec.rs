@@ -267,5 +267,5 @@ pub trait ConcurrentPinnedVec<T> {
     /// The iterator is then responsible for yielding the valid elements within this `range`,
     /// or dropping them if the iterator is not fully consumed. Furthermore, once the iterator
     /// is dropped, all the allocations of the concurrent pinned vector will also be dropped.
-    fn into_iter(self, range: Range<usize>) -> Self::IntoIter;
+    unsafe fn into_iter(self, range: Range<usize>) -> Self::IntoIter;
 }
