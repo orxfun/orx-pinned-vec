@@ -258,5 +258,14 @@ pub trait ConcurrentPinnedVec<T> {
     unsafe fn ptr_iter_unchecked(&self, range: Range<usize>) -> Self::PtrIter<'_>;
 
     /// Converts the concurrent pinned vector into an exact sized iterator.
-    fn into_iter(self) -> Self::IntoIter;
+    ///
+    /// # SAFETY
+    ///
+    /// This method is to be called when only `range` contains valid elements of the vector
+    /// while elements in other positions are already dropped, if they need to be dropped.
+    ///
+    /// The iterator is then responsible for yielding the valid elements within this `range`,
+    /// or dropping them if the iterator is not fully consumed. Furthermore, once the iterator
+    /// is dropped, all the allocations of the concurrent pinned vector will also be dropped.
+    fn into_iter(self, range: Range<usize>) -> Self::IntoIter;
 }
