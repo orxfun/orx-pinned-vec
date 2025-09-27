@@ -256,4 +256,7 @@ pub trait ConcurrentPinnedVec<T> {
     /// In brief, it is safe to use this method provided that the caller guarantees
     /// that the range is in bounds.
     unsafe fn ptr_iter_unchecked(&self, range: Range<usize>) -> Self::PtrIter<'_>;
+
+    /// Converts the concurrent pinned vector into an exact sized iterator.
+    fn into_iter(self) -> Self::IntoIter;
 }
