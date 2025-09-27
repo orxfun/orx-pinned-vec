@@ -29,6 +29,9 @@ pub trait ConcurrentPinnedVec<T> {
     where
         Self: 'a;
 
+    /// Iterator that the pinned vector is converted into, which moves out elements.
+    type IntoIter: ExactSizeIterator<Item = T>;
+
     /// Converts back to the underlying pinned vector with the given length.
     ///
     /// # Safety
