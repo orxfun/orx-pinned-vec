@@ -25,7 +25,7 @@ pub trait ConcurrentPinnedVec<T> {
         Self: 'a;
 
     /// Iterator yielding pointers to elements of the vector.
-    type PtrIter<'a>: ExactSizeIterator<Item = *mut T> + Default
+    type PtrIter<'a>: ExactSizeIterator<Item = *mut T>
     where
         Self: 'a;
 
