@@ -29,6 +29,14 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
 /// to find its position in the vector.
 ///
 /// Out of bounds checks are in place.
+///
+/// # Safety - Clippy
+///
+/// The function is decorated with `#[allow(clippy::not_unsafe_ptr_arg_deref)]`.
+/// This function is not marked `unsafe` since it does not dereference the argument pointer.
+/// This `allow` decoration can be removed once the open false-positiveness issue is fixed.
+/// See the related clippy issue [here](https://github.com/rust-lang/rust-clippy/issues/3045).
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn index_of_ptr<T>(slice: &[T], element_ptr: *const T) -> Option<usize> {
     match slice.as_ptr_range().contains(&element_ptr) {
         // SAFETY: Pointer of the element belongs to the slice; therefore, it is safe to
