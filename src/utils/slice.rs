@@ -33,7 +33,7 @@ pub fn index_of_ptr<T>(slice: &[T], element_ptr: *const T) -> Option<usize> {
     let element_ptr = element_ptr as usize;
     let ptr = slice.as_ptr();
     let ptr_beg = ptr as usize;
-    if element_ptr < ptr_beg {
+    if element_ptr < ptr_beg || slice.is_empty() {
         None
     } else {
         let ptr_end = (unsafe { ptr.add(slice.len() - 1) }) as usize;
