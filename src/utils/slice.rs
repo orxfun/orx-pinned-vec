@@ -30,20 +30,12 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
 ///
 /// Out of bounds checks are in place.
 pub fn index_of_ptr<T>(slice: &[T], element_ptr: *const T) -> Option<usize> {
-    let element_ptr = element_ptr as usize;
-    let ptr = slice.as_ptr();
-    let ptr_beg = ptr as usize;
-    if element_ptr < ptr_beg || slice.is_empty() {
-        None
-    } else {
-        let ptr_end = (unsafe { ptr.add(slice.len() - 1) }) as usize;
-        if element_ptr > ptr_end {
-            None
-        } else {
-            let diff = element_ptr - ptr_beg;
-            let count = diff / core::mem::size_of::<T>();
-            Some(count)
-        }
+    match slice.as_ptr_range().contains(&element_ptr) {
+        // SAFETY: Pointer of the element belongs to the slice; therefore, it is safe to
+        // calculate its offset from the beginning of the slice. Resulting offset will be
+        // a nonnegative value (usize), so 'as usize' will always succeed.
+        true => Some(unsafe { element_ptr.offset_from(slice.as_ptr()) } as usize),
+        false => None,
     }
 }
 
