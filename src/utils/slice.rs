@@ -29,21 +29,21 @@ pub fn index_of<T>(slice: &[T], element: &T) -> Option<usize> {
 /// to find its position in the vector.
 ///
 /// Out of bounds checks are in place.
+///
+/// # Safety - Clippy
+///
+/// The function is decorated with `#[allow(clippy::not_unsafe_ptr_arg_deref)]`.
+/// This function is not marked `unsafe` since it does not dereference the argument pointer.
+/// This `allow` decoration can be removed once the open false-positiveness issue is fixed.
+/// See the related clippy issue [here](https://github.com/rust-lang/rust-clippy/issues/3045).
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn index_of_ptr<T>(slice: &[T], element_ptr: *const T) -> Option<usize> {
-    let element_ptr = element_ptr as usize;
-    let ptr = slice.as_ptr();
-    let ptr_beg = ptr as usize;
-    if element_ptr < ptr_beg {
-        None
-    } else {
-        let ptr_end = (unsafe { ptr.add(slice.len() - 1) }) as usize;
-        if element_ptr > ptr_end {
-            None
-        } else {
-            let diff = element_ptr - ptr_beg;
-            let count = diff / core::mem::size_of::<T>();
-            Some(count)
-        }
+    match slice.as_ptr_range().contains(&element_ptr) {
+        // SAFETY: Pointer of the element belongs to the slice; therefore, it is safe to
+        // calculate its offset from the beginning of the slice. Resulting offset will be
+        // a nonnegative value (usize), so 'as usize' will always succeed.
+        true => Some(unsafe { element_ptr.offset_from(slice.as_ptr()) } as usize),
+        false => None,
     }
 }
 
