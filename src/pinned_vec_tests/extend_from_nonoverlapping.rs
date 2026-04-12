@@ -1,5 +1,4 @@
 use crate::PinnedVec;
-use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 /// Tests the pinned vector guarantee on extending the vector;
@@ -16,7 +15,7 @@ use alloc::vec::Vec;
 /// # Panics
 ///
 /// Panics if the pinned vector implementation `P` does not satisfy the abovementioned pinned elements guarantee.
-pub fn extend_from_nonoverlapping<P: PinnedVec<String> + Sized>(
+pub fn extend_from_nonoverlapping<P: PinnedVec<usize> + Sized>(
     pinned_vec: P,
     max_allowed_test_len: usize,
 ) -> P {
@@ -38,17 +37,15 @@ pub fn extend_from_nonoverlapping<P: PinnedVec<String> + Sized>(
 
     for slice_len in extend_lengths.iter().copied() {
         let begin = vec.len();
-        let mut src: Vec<_> = (begin..(begin + slice_len))
-            .map(|i| i.to_string())
-            .collect();
+        let mut src: Vec<_> = (begin..(begin + slice_len)).collect();
         let src_ptr = src.as_mut_ptr();
         unsafe { vec.extend_from_nonoverlapping(src_ptr, src.len()) };
         unsafe { src.set_len(0) };
     }
 
     assert_eq!(vec.len(), extend_lengths.iter().sum());
-    for i in vec.iter() {
-        assert_eq!(i, &i.to_string());
+    for (i, j) in vec.iter().enumerate() {
+        assert_eq!(i, *j);
     }
 
     vec

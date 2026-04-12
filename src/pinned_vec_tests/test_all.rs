@@ -17,6 +17,8 @@ use crate::PinnedVec;
 pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) {
     let pinned_vec = super::push::push(pinned_vec, test_vec_len);
     let pinned_vec = super::extend::extend(pinned_vec, test_vec_len);
+    let pinned_vec =
+        super::extend_from_nonoverlapping::extend_from_nonoverlapping(pinned_vec, test_vec_len);
     let pinned_vec = super::insert::insert(pinned_vec, test_vec_len);
     let pinned_vec = super::pop::pop(pinned_vec, test_vec_len);
     let pinned_vec = super::remove::remove(pinned_vec, test_vec_len);
