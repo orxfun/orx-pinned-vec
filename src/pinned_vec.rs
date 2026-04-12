@@ -179,7 +179,7 @@ pub trait PinnedVec<T>:
     /// Extends this vector by copying `count` * `size_of::<T>()` bytes from src to self.
     /// The source and destination may not overlap.
     ///
-    /// This method can be considered as a combination of [`extend`] and [`copy_from_nonoverlapping`] methods
+    /// This method can be considered as a combination of [`extend`] and `copy_from_nonoverlapping` methods
     /// such that:
     ///
     /// * it takes the elements from `src` and writes them to this vector by `memcpy`;
@@ -189,7 +189,7 @@ pub trait PinnedVec<T>:
     ///
     /// Behavior is undefined if any of the following conditions are violated:
     ///
-    /// - (i) `src` must be [valid] for reads of `count * size_of::<T>()` bytes.
+    /// - (i) `src` must be valid for reads of `count * size_of::<T>()` bytes.
     /// - (ii) `src` must be properly aligned.
     /// - (iii) The region of memory beginning at `src` with a size of `count * size_of::<T>()`
     ///   bytes must *not* overlap with the region of memory beginning at `dst` with the same size.
