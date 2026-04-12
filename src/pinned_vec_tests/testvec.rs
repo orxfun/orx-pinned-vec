@@ -154,6 +154,7 @@ impl<T> PinnedVec<T> for TestVec<T> {
         self.0.reserve(count);
         let dst = unsafe { self.0.as_mut_ptr().add(self.0.len()) };
         unsafe { dst.copy_from_nonoverlapping(src, count) };
+        unsafe { self.0.set_len(self.len() + count) };
     }
 
     fn get(&self, index: usize) -> Option<&T> {
