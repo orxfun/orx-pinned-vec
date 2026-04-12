@@ -143,6 +143,13 @@ impl<T> PinnedVec<T> for StdVec<T> {
         self.0.extend_from_slice(other)
     }
 
+    unsafe fn extend_from_nonoverlapping(&mut self, src: *const T, count: usize) {
+        self.0.reserve(count);
+        let dst = unsafe { self.0.as_mut_ptr().add(self.0.len()) };
+        unsafe { dst.copy_from_nonoverlapping(src, count) };
+        unsafe { self.0.set_len(self.0.len() + count) };
+    }
+
     fn get(&self, index: usize) -> Option<&T> {
         self.0.get(index)
     }

@@ -1,5 +1,6 @@
 mod binary_search;
 mod extend;
+mod extend_from_nonoverlapping;
 mod insert;
 mod pop;
 mod push;

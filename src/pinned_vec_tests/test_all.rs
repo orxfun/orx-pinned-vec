@@ -17,6 +17,8 @@ use crate::PinnedVec;
 pub fn test_pinned_vec<P: PinnedVec<usize>>(pinned_vec: P, test_vec_len: usize) {
     let pinned_vec = super::push::push(pinned_vec, test_vec_len);
     let pinned_vec = super::extend::extend(pinned_vec, test_vec_len);
+    let pinned_vec =
+        super::extend_from_nonoverlapping::extend_from_nonoverlapping(pinned_vec, test_vec_len);
     let pinned_vec = super::insert::insert(pinned_vec, test_vec_len);
     let pinned_vec = super::pop::pop(pinned_vec, test_vec_len);
     let pinned_vec = super::remove::remove(pinned_vec, test_vec_len);
@@ -178,6 +180,13 @@ mod tests {
         {
             self.assert_has_room(other.len());
             self.0.extend_from_slice(other)
+        }
+
+        unsafe fn extend_from_nonoverlapping(&mut self, src: *const T, count: usize) {
+            self.0.reserve(count);
+            let dst = unsafe { self.0.as_mut_ptr().add(self.0.len()) };
+            unsafe { dst.copy_from_nonoverlapping(src, count) };
+            unsafe { self.0.set_len(self.0.len() + count) };
         }
 
         fn get(&self, index: usize) -> Option<&T> {

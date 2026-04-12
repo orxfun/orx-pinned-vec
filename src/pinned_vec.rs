@@ -176,6 +176,28 @@ pub trait PinnedVec<T>:
     where
         T: Clone;
 
+    /// Extends this vector by copying `count` * `size_of::<T>()` bytes from src to self.
+    /// The source and destination may not overlap.
+    ///
+    /// This method can be considered as a combination of [`extend`] and `copy_from_nonoverlapping` methods
+    /// such that:
+    ///
+    /// * it takes the elements from `src` and writes them to this vector by `memcpy`;
+    /// * however, it does add these elements to the end of this vector which grows as needed.
+    ///
+    /// # SAFETY
+    ///
+    /// Behavior is undefined if any of the following conditions are violated:
+    ///
+    /// - (i) `src` must be valid for reads of `count * size_of::<T>()` bytes.
+    /// - (ii) `src` must be properly aligned.
+    /// - (iii) The region of memory beginning at `src` with a size of `count * size_of::<T>()`
+    ///   bytes must *not* overlap with the region of memory beginning at `dst` with the same size.
+    ///   This is automatically satisfied when it is used to extend the pinned vector.
+    ///
+    /// [`extend`]: core::iter::Extend::extend
+    unsafe fn extend_from_nonoverlapping(&mut self, src: *const T, count: usize);
+
     /// Returns a reference to an element with the given `index` returns None if the index is out of bounds.
     fn get(&self, index: usize) -> Option<&T>;
     /// Returns a mutable reference to an element with the given `index` returns None if the index is out of bounds.
