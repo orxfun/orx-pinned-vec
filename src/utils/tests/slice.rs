@@ -1,5 +1,4 @@
 use crate::utils::slice::index_of_ptr;
-use alloc::vec;
 
 #[test]
 fn index_of_ptr_empty_slice() {
@@ -11,7 +10,7 @@ fn index_of_ptr_empty_slice() {
 
 #[test]
 fn index_of_ptr_out_of_bounds() {
-    let vec = vec![0, 1, 2, 3, 4, 5, 6, 7];
+    let vec = [0, 1, 2, 3, 4, 5, 6, 7];
 
     let ptr_to_check = unsafe { vec.as_ptr().add(4) };
     assert_eq!(unsafe { *ptr_to_check }, 4);
@@ -28,7 +27,7 @@ fn index_of_ptr_out_of_bounds() {
 
 #[test]
 fn index_of_ptr_in_bounds() {
-    let vec = vec![0, 1, 2, 3, 4, 5];
+    let vec = [0, 1, 2, 3, 4, 5];
 
     let ptr_to_check = unsafe { vec.as_ptr().add(3) };
     assert_eq!(unsafe { *ptr_to_check }, 3);
@@ -54,11 +53,11 @@ fn index_of_ptr_in_bounds() {
 
 #[test]
 fn index_of_ptr_different_allocation() {
-    let vec1 = vec![0, 1, 2, 3, 4, 5];
+    let vec1 = [0, 1, 2, 3, 4, 5];
     let ptr_to_check = unsafe { vec1.as_ptr().add(3) };
     assert_eq!(unsafe { *ptr_to_check }, 3);
 
-    let vec2 = vec![0, 1, 2, 3, 4, 5];
+    let vec2 = [0, 1, 2, 3, 4, 5];
 
     let idx = index_of_ptr(&vec2[..], ptr_to_check);
     assert_eq!(idx, None);
