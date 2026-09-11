@@ -112,6 +112,7 @@ where
     /// In other words, when we do not rely on reduction methods, such as `count` or `sum`, appending element or elements to the end of the vector:
     /// * does not mutate any of already added elements, and hence,
     /// * **it is not different than creating a new element in the scope**.
+    #[inline(always)]
     pub fn imp_push(&self, value: T) {
         self.pinned_mut().push(value);
     }
@@ -140,6 +141,7 @@ where
     /// let b = vec.imp_push_get_ref('b');
     /// assert_eq!(b, &'b');
     /// ```
+    #[inline(always)]
     pub fn imp_push_get_ref(&self, value: T) -> &T {
         let pinned = self.pinned_mut();
         pinned.push(value);
