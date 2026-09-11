@@ -1,15 +1,21 @@
 use crate::PinnedVec;
 use core::{cell::UnsafeCell, marker::PhantomData};
+use orx_self_or::SoM;
 
-pub struct ImpVec<T, P>
+pub struct ImpVec<T, P, S = P>
 where
     P: PinnedVec<T>,
+    S: SoM<P>,
 {
-    pinned_vec: UnsafeCell<P>,
-    phantom: PhantomData<T>,
+    pinned_vec: UnsafeCell<S>,
+    phantom: PhantomData<(T, P)>,
 }
 
-impl<T, P: PinnedVec<T>> ImpVec<T, P> {
+impl<T, P, S> ImpVec<T, P, S>
+where
+    P: PinnedVec<T>,
+    S: SoM<P>,
+{
     /// Consumes the imp-vec into the wrapped inner pinned vector.
     ///
     /// # Example
@@ -26,7 +32,7 @@ impl<T, P: PinnedVec<T>> ImpVec<T, P> {
     /// let pinned_vec = imp_vec.into_inner();
     /// assert_eq!(&pinned_vec, &[42]);
     /// ```
-    pub fn into_inner(self) -> P {
+    pub fn into_inner(self) -> S {
         self.pinned_vec.into_inner()
     }
 
@@ -229,7 +235,7 @@ impl<T, P: PinnedVec<T>> ImpVec<T, P> {
         // SAFETY: `ImpVec` does not implement Send or Sync.
         // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
         // All other calls to this internal method require a mutable reference.
-        unsafe { &mut *self.pinned_vec.get() }
+        unsafe { &mut *self.pinned_vec.get() }.get_mut()
     }
 
     #[inline(always)]
@@ -237,6 +243,6 @@ impl<T, P: PinnedVec<T>> ImpVec<T, P> {
         // SAFETY: `ImpVec` does not implement Send or Sync.
         // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
         // All other calls to this internal method require a mutable reference.
-        unsafe { &*self.pinned_vec.get() }
+        unsafe { &*self.pinned_vec.get() }.get_ref()
     }
 }
