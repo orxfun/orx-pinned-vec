@@ -39,18 +39,18 @@ pub fn insert<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize) -
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pinned_vec_tests::testvec::TestVec;
+    use crate::pinned_vec_tests::testvec::FixedCapVec;
 
     #[test]
     fn test_insert_empty() {
-        let pinned_vec = TestVec::new(0);
+        let pinned_vec = FixedCapVec::new(0);
         insert(pinned_vec, 0);
     }
 
     #[test]
     fn test_insert_small() {
         let capacity = 40;
-        let pinned_vec = TestVec::new(capacity);
+        let pinned_vec = FixedCapVec::new(capacity);
         insert(pinned_vec, capacity);
     }
 
@@ -58,7 +58,7 @@ mod tests {
     #[cfg(not(miri))]
     fn test_insert_medium() {
         let capacity = 256;
-        let pinned_vec = TestVec::new(capacity);
+        let pinned_vec = FixedCapVec::new(capacity);
         insert(pinned_vec, capacity);
     }
 }

@@ -515,11 +515,11 @@ pub trait PinnedVec<T>:
 
 #[cfg(test)]
 mod tests {
-    use crate::{PinnedVec, pinned_vec_tests::testvec::TestVec};
+    use crate::{PinnedVec, pinned_vec_tests::testvec::FixedCapVec};
 
     #[test]
     fn is_empty() {
-        let mut vec = TestVec::new(5);
+        let mut vec = FixedCapVec::new(5);
         assert!(vec.is_empty());
 
         vec.push(1);

@@ -29,6 +29,7 @@ pub mod utils;
 pub use capacity::CapacityState;
 pub use concurrent_pinned_vec::ConcurrentPinnedVec;
 pub use errors::PinnedVecGrowthError;
+pub use imp_vec::ImpVec;
 pub use into_concurrent_pinned_vec::IntoConcurrentPinnedVec;
 pub use orx_iterable::{Collection, CollectionMut, Iterable};
 pub use pinned_vec::PinnedVec;

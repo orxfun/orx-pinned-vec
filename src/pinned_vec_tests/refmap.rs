@@ -68,7 +68,7 @@ impl RefMap {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pinned_vec_tests::testvec::TestVec;
+    use crate::pinned_vec_tests::testvec::FixedCapVec;
 
     #[test]
     fn deref() {
@@ -102,7 +102,7 @@ mod tests {
 
     #[test]
     fn set_reference() {
-        let mut pinned_vec = TestVec::new(10);
+        let mut pinned_vec = FixedCapVec::new(10);
         pinned_vec.push(10);
 
         let max_num_indices = 10;
@@ -121,7 +121,7 @@ mod tests {
 
     #[test]
     fn drop_reference() {
-        let mut pinned_vec = TestVec::new(10);
+        let mut pinned_vec = FixedCapVec::new(10);
         pinned_vec.push(10);
         pinned_vec.push(20);
 
