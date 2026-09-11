@@ -15,9 +15,13 @@
 
 extern crate alloc;
 
+#[cfg(test)]
+mod tests;
+
 mod capacity;
 mod concurrent_pinned_vec;
 mod errors;
+mod imp_vec;
 mod into_concurrent_pinned_vec;
 mod pinned_vec;
 /// Tests methods to validate pinned element guarantees of an implementing type.
@@ -28,6 +32,7 @@ pub mod utils;
 pub use capacity::CapacityState;
 pub use concurrent_pinned_vec::ConcurrentPinnedVec;
 pub use errors::PinnedVecGrowthError;
+pub use imp_vec::ImpVec;
 pub use into_concurrent_pinned_vec::IntoConcurrentPinnedVec;
 pub use orx_iterable::{Collection, CollectionMut, Iterable};
 pub use pinned_vec::PinnedVec;

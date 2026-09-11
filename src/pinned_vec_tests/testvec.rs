@@ -1,23 +1,21 @@
 use super::helpers::range::{range_end, range_start};
 use crate::*;
 use alloc::vec::Vec;
-use core::{
-    cmp::Ordering,
-    iter::Rev,
-    ops::{Index, IndexMut, RangeBounds},
-};
+use core::ops::{Index, IndexMut, RangeBounds};
+use core::{cmp::Ordering, iter::Rev};
 use orx_iterable::Collection;
 use orx_pseudo_default::PseudoDefault;
 
-pub struct TestVec<T>(Vec<T>);
+#[derive(Debug, PartialEq, Eq)]
+pub struct FixedCapVec<T>(Vec<T>);
 
-impl<T> PseudoDefault for TestVec<T> {
+impl<T> PseudoDefault for FixedCapVec<T> {
     fn pseudo_default() -> Self {
         Self(Default::default())
     }
 }
 
-impl<T> TestVec<T> {
+impl<T> FixedCapVec<T> {
     #[cfg(test)]
     pub fn new(capacity: usize) -> Self {
         Self(Vec::with_capacity(capacity))
@@ -28,7 +26,7 @@ impl<T> TestVec<T> {
     }
 }
 
-impl<T> Index<usize> for TestVec<T> {
+impl<T> Index<usize> for FixedCapVec<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -36,13 +34,13 @@ impl<T> Index<usize> for TestVec<T> {
     }
 }
 
-impl<T> IndexMut<usize> for TestVec<T> {
+impl<T> IndexMut<usize> for FixedCapVec<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.0[index]
     }
 }
 
-impl<T> IntoIterator for TestVec<T> {
+impl<T> IntoIterator for FixedCapVec<T> {
     type Item = T;
     type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
     fn into_iter(self) -> Self::IntoIter {
@@ -50,7 +48,7 @@ impl<T> IntoIterator for TestVec<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a TestVec<T> {
+impl<'a, T> IntoIterator for &'a FixedCapVec<T> {
     type Item = &'a T;
 
     type IntoIter = core::slice::Iter<'a, T>;
@@ -60,7 +58,7 @@ impl<'a, T> IntoIterator for &'a TestVec<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut TestVec<T> {
+impl<'a, T> IntoIterator for &'a mut FixedCapVec<T> {
     type Item = &'a mut T;
 
     type IntoIter = core::slice::IterMut<'a, T>;
@@ -70,7 +68,7 @@ impl<'a, T> IntoIterator for &'a mut TestVec<T> {
     }
 }
 
-impl<T> PinnedVec<T> for TestVec<T> {
+impl<T> PinnedVec<T> for FixedCapVec<T> {
     type IterRev<'a>
         = Rev<core::slice::Iter<'a, T>>
     where

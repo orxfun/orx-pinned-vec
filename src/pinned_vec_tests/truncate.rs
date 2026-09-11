@@ -36,18 +36,18 @@ pub fn truncate<P: PinnedVec<usize>>(pinned_vec: P, max_allowed_test_len: usize)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pinned_vec_tests::testvec::TestVec;
+    use crate::pinned_vec_tests::testvec::FixedCapVec;
 
     #[test]
     fn test_truncate_empty() {
-        let pinned_vec = TestVec::new(0);
+        let pinned_vec = FixedCapVec::new(0);
         truncate(pinned_vec, 0);
     }
 
     #[test]
     fn test_truncate_small() {
         let capacity = 40;
-        let pinned_vec = TestVec::new(capacity);
+        let pinned_vec = FixedCapVec::new(capacity);
         truncate(pinned_vec, capacity);
     }
 
@@ -55,7 +55,7 @@ mod tests {
     #[cfg(not(miri))]
     fn test_truncate_medium() {
         let capacity = 512;
-        let pinned_vec = TestVec::new(capacity);
+        let pinned_vec = FixedCapVec::new(capacity);
         truncate(pinned_vec, capacity);
     }
 }
