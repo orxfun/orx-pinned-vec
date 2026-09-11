@@ -17,6 +17,36 @@ where
     P: PinnedVec<T>,
     S: SoM<P>,
 {
+    // helper
+
+    #[allow(clippy::mut_from_ref)]
+    #[inline(always)]
+    fn pinned_mut(&self) -> &mut P {
+        // SAFETY: `ImpVec` does not implement Send or Sync.
+        // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
+        // All other calls to this internal method require a mutable reference.
+        unsafe { &mut *self.pinned_vec.get() }.get_mut()
+    }
+
+    #[inline(always)]
+    fn pinned(&self) -> &P {
+        // SAFETY: `ImpVec` does not implement Send or Sync.
+        // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
+        // All other calls to this internal method require a mutable reference.
+        unsafe { &*self.pinned_vec.get() }.get_ref()
+    }
+
+    // new
+
+    pub(super) fn new(pinned_vec: S) -> Self {
+        Self {
+            pinned_vec: pinned_vec.into(),
+            phantom: PhantomData,
+        }
+    }
+
+    // api
+
     /// Consumes the imp-vec into the wrapped inner pinned vector.
     ///
     /// # Example
@@ -228,25 +258,6 @@ where
         T: Clone,
     {
         self.pinned_mut().extend_from_slice(slice);
-    }
-
-    // helper
-
-    #[allow(clippy::mut_from_ref)]
-    #[inline(always)]
-    fn pinned_mut(&self) -> &mut P {
-        // SAFETY: `ImpVec` does not implement Send or Sync.
-        // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
-        // All other calls to this internal method require a mutable reference.
-        unsafe { &mut *self.pinned_vec.get() }.get_mut()
-    }
-
-    #[inline(always)]
-    fn pinned(&self) -> &P {
-        // SAFETY: `ImpVec` does not implement Send or Sync.
-        // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
-        // All other calls to this internal method require a mutable reference.
-        unsafe { &*self.pinned_vec.get() }.get_ref()
     }
 }
 

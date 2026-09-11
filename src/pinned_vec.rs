@@ -1,4 +1,4 @@
-use crate::CapacityState;
+use crate::{CapacityState, imp_vec::ImpVec};
 use core::{
     cmp::Ordering,
     ops::{Index, IndexMut, RangeBounds},
@@ -63,7 +63,24 @@ pub trait PinnedVec<T>:
         T: 'a,
         Self: 'a;
 
+    // imp vec
+
+    fn as_imp_vec(&mut self) -> ImpVec<T, Self, &mut Self>
+    where
+        Self: Sized,
+    {
+        ImpVec::new(self)
+    }
+
+    fn into_imp_vec(self) -> ImpVec<T, Self, Self>
+    where
+        Self: Sized,
+    {
+        ImpVec::new(self)
+    }
+
     // pinned
+
     /// Returns the index of the `element` with the given reference.
     ///
     /// Note that `T: Eq` is not required; reference equality is used.
