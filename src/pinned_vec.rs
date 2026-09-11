@@ -63,7 +63,7 @@ pub trait PinnedVec<T>:
 
     // imp vec
 
-    /// Returns a mutable view of this vector as an `ImpVec` without consuming it.
+    /// Returns a mutable view of this vector as an [`ImpVec`] without consuming it.
     ///
     /// This is useful when a method wants to operate on the underlying data through the
     /// `ImpVec` abstraction while keeping ownership of the original vector.
@@ -74,7 +74,7 @@ pub trait PinnedVec<T>:
         ImpVec::new(self)
     }
 
-    /// Consumes this vector and returns it as an `ImpVec`.
+    /// Consumes this vector and returns it as an [`ImpVec`].
     ///
     /// This is useful when ownership should be transferred directly into an `ImpVec`-based API.
     fn into_imp_vec(self) -> ImpVec<T, Self, Self>
