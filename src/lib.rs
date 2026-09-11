@@ -18,6 +18,7 @@ extern crate alloc;
 mod capacity;
 mod concurrent_pinned_vec;
 mod errors;
+mod imp_vec;
 mod into_concurrent_pinned_vec;
 mod pinned_vec;
 /// Tests methods to validate pinned element guarantees of an implementing type.
