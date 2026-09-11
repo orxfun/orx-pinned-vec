@@ -1,4 +1,5 @@
 use crate::PinnedVec;
+use core::ops::{Deref, DerefMut};
 use core::{cell::UnsafeCell, marker::PhantomData};
 use orx_self_or::SoM;
 
@@ -244,5 +245,18 @@ where
         // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
         // All other calls to this internal method require a mutable reference.
         unsafe { &*self.pinned_vec.get() }.get_ref()
+    }
+}
+
+impl<T, P: PinnedVec<T>> Deref for ImpVec<T, P> {
+    type Target = P;
+    fn deref(&self) -> &Self::Target {
+        self.pinned()
+    }
+}
+
+impl<T, P: PinnedVec<T>> DerefMut for ImpVec<T, P> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.pinned_mut()
     }
 }
