@@ -1,14 +1,12 @@
 use super::helpers::range::{range_end, range_start};
 use crate::*;
 use alloc::vec::Vec;
-use core::{
-    cmp::Ordering,
-    iter::Rev,
-    ops::{Index, IndexMut, RangeBounds},
-};
+use core::ops::{Index, IndexMut, RangeBounds};
+use core::{cmp::Ordering, iter::Rev};
 use orx_iterable::Collection;
 use orx_pseudo_default::PseudoDefault;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct FixedCapVec<T>(Vec<T>);
 
 impl<T> PseudoDefault for FixedCapVec<T> {
