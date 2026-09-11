@@ -65,7 +65,14 @@ pub trait PinnedVec<T>:
 
     // imp vec
 
-    fn into_imp_vec(self) -> ImpVec<T, Self>
+    fn as_imp_vec(&mut self) -> ImpVec<T, Self, &mut Self>
+    where
+        Self: Sized,
+    {
+        ImpVec::new(self)
+    }
+
+    fn into_imp_vec(self) -> ImpVec<T, Self, Self>
     where
         Self: Sized,
     {

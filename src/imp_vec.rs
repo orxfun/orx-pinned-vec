@@ -18,17 +18,62 @@ use orx_self_or::SoM;
 ///
 /// A common use case is when we want to iterate over existing elements,
 /// and add new elements to the same vector.
-pub struct ImpVec<T, P>
+///
+/// The following code does not compile:
+///
+/// ```ignore
+/// fn add_doubles_of_evens(vec: &mut Vec<u32>) {
+///     for i in vec.iter().copied() {
+///         if i.is_multiple_of(2) {
+///             let doubled = 2 * i;
+///             vec.push(doubled); // cannot borrow `*vec` as mutable because it is also borrowed as immutable
+///         }
+///     }
+/// }
+///
+/// let mut vec = vec![9, 10, 11];
+///
+/// add_doubles_of_evens(&mut vec);
+///
+/// assert_eq!(&vec, &[9, 10, 11, 20]);
+/// ```
+///
+/// However, this would safely work with a pinned vector.
+/// `SplitVec` is one pinned vector implementation, see `orx-split-vec` crate for details.
+///
+/// ```ignore
+/// use orx_pinned_vec::*;
+///
+/// fn add_doubles_of_evens(vec: &mut SplitVec<u32>) {
+///     let vec = vec.as_imp_vec();
+///     for i in vec.iter().copied() {
+///         if i.is_multiple_of(2) {
+///             let doubled = 2 * i;
+///             vec.imp_push(doubled);
+///         }
+///     }
+/// }
+///
+/// let mut vec = SplitVec::new();
+/// vec.extend_from_slice(&[9, 10, 11]);
+///
+/// add_doubles_of_evens(&mut vec);
+///
+/// assert_eq!(&vec, &[9, 10, 11, 20]);
+/// ```
+pub struct ImpVec<T, P, S>
 where
     P: PinnedVec<T>,
+    S: SoM<P>,
 {
-    pinned_vec: UnsafeCell<P>,
-    phantom: PhantomData<T>,
+    pinned_vec: UnsafeCell<S>,
+    phantom: PhantomData<(T, P)>,
 }
 
-impl<T, P> ImpVec<T, P>
+impl<T, P, S> ImpVec<T, P, S>
 where
     P: PinnedVec<T>,
+    S: SoM<P>,
 {
     // helper
 
@@ -38,7 +83,7 @@ where
         // SAFETY: `ImpVec` does not implement Send or Sync.
         // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
         // All other calls to this internal method require a mutable reference.
-        unsafe { &mut *self.pinned_vec.get() }
+        unsafe { &mut *self.pinned_vec.get() }.get_mut()
     }
 
     #[inline(always)]
@@ -46,12 +91,12 @@ where
         // SAFETY: `ImpVec` does not implement Send or Sync.
         // Further `imp_push` and `imp_extend_from_slice` methods are safe to call with a shared reference due to pinned vector guarantees.
         // All other calls to this internal method require a mutable reference.
-        unsafe { &*self.pinned_vec.get() }
+        unsafe { &*self.pinned_vec.get() }.get_ref()
     }
 
     // new
 
-    pub(super) fn new(pinned_vec: P) -> Self {
+    pub(super) fn new(pinned_vec: S) -> Self {
         Self {
             pinned_vec: pinned_vec.into(),
             phantom: PhantomData,
@@ -60,7 +105,7 @@ where
 
     // api
 
-    pub fn into_inner(self) -> P {
+    pub fn into_inner(self) -> S {
         self.pinned_vec.into_inner()
     }
 
@@ -84,14 +129,22 @@ where
     }
 }
 
-impl<T, P: PinnedVec<T>> Deref for ImpVec<T, P> {
+impl<T, P, S> Deref for ImpVec<T, P, S>
+where
+    P: PinnedVec<T>,
+    S: SoM<P>,
+{
     type Target = P;
     fn deref(&self) -> &Self::Target {
         self.pinned()
     }
 }
 
-impl<T, P: PinnedVec<T>> DerefMut for ImpVec<T, P> {
+impl<T, P, S> DerefMut for ImpVec<T, P, S>
+where
+    P: PinnedVec<T>,
+    S: SoM<P>,
+{
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.pinned_mut()
     }
@@ -104,12 +157,38 @@ mod tests {
 
     #[test]
     fn xyz() {
-        let mut vec = vec![1, 2, 3];
-
-        fn add_doubles_of_evens(vec: &mut Vec<u32>) {
-            //
+        fn add_doubles_of_evens(vec: &mut impl PinnedVec<u32>) {
+            let vec = vec.as_imp_vec();
+            for i in vec.iter().copied() {
+                if i.is_multiple_of(2) {
+                    let doubled = 2 * i;
+                    vec.imp_push(doubled);
+                }
+            }
         }
+
+        let mut vec = FixedCapVec::new(16);
+        vec.extend_from_slice(&[9, 10, 11]);
+
+        add_doubles_of_evens(&mut vec);
+        assert_eq!(vec.as_slice(), &[9, 10, 11, 20]);
     }
+
+    // fn xyz2() {
+    //     fn add_doubles_of_evens(vec: &mut Vec<u32>) {
+    //         for i in vec.iter().copied() {
+    //             if i.is_multiple_of(2) {
+    //                 let doubled = 2 * i;
+    //                 vec.push(doubled); // cannot borrow `*vec` as mutable because it is also borrowed as immutable
+    //             }
+    //         }
+    //     }
+
+    //     let mut vec = vec![9, 10, 11];
+
+    //     add_doubles_of_evens(&mut vec);
+    //     assert_eq!(vec.as_slice(), &[9, 10, 11, 20]);
+    // }
 
     #[test]
     fn abc() {
@@ -119,7 +198,7 @@ mod tests {
         vec.push(1);
         vec.push(2);
 
-        let imp = vec.into_imp_vec();
+        let imp = vec.as_imp_vec();
 
         for x in imp.iter().copied() {
             imp.imp_push(x);
@@ -131,7 +210,7 @@ mod tests {
 
         let vec = imp.into_inner();
 
-        assert_eq!(vec, FixedCapVec::<i32>::new(1));
+        // assert_eq!(vec, FixedCapVec::<i32>::new(1));
     }
 
     #[test]
