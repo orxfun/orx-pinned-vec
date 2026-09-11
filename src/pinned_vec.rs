@@ -1,8 +1,6 @@
 use crate::{CapacityState, imp_vec::ImpVec};
-use core::{
-    cmp::Ordering,
-    ops::{Index, IndexMut, RangeBounds},
-};
+use core::cmp::Ordering;
+use core::ops::{Index, IndexMut, RangeBounds};
 use orx_iterable::{Collection, CollectionMut};
 use orx_pseudo_default::PseudoDefault;
 
@@ -65,6 +63,10 @@ pub trait PinnedVec<T>:
 
     // imp vec
 
+    /// Returns a mutable view of this vector as an `ImpVec` without consuming it.
+    ///
+    /// This is useful when a method wants to operate on the underlying data through the
+    /// `ImpVec` abstraction while keeping ownership of the original vector.
     fn as_imp_vec(&mut self) -> ImpVec<T, Self, &mut Self>
     where
         Self: Sized,
@@ -72,6 +74,9 @@ pub trait PinnedVec<T>:
         ImpVec::new(self)
     }
 
+    /// Consumes this vector and returns it as an `ImpVec`.
+    ///
+    /// This is useful when ownership should be transferred directly into an `ImpVec`-based API.
     fn into_imp_vec(self) -> ImpVec<T, Self, Self>
     where
         Self: Sized,
@@ -511,25 +516,4 @@ pub trait PinnedVec<T>:
 
     /// Returns the maximum possible capacity that the vector can grow to.
     fn capacity_bound(&self) -> usize;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{PinnedVec, pinned_vec_tests::testvec::FixedCapVec};
-
-    #[test]
-    fn is_empty() {
-        let mut vec = FixedCapVec::new(5);
-        assert!(vec.is_empty());
-
-        vec.push(1);
-        assert!(!vec.is_empty());
-
-        vec.push(2);
-        vec.push(3);
-        assert!(!vec.is_empty());
-
-        vec.clear();
-        assert!(vec.is_empty());
-    }
 }

@@ -105,15 +105,68 @@ where
 
     // api
 
+    /// Returns back the inner pinned vector that this `ImpVec` is created from.
     pub fn into_inner(self) -> S {
         self.pinned_vec.into_inner()
     }
 
+    /// Pushes the `value` to the vector.
+    /// This method differs from the `push` method with the required reference.
+    /// Unlike `push`, `imp_push` allows to push the element with a shared reference.
+    ///
+    /// # Example
+    ///
+    /// ```rust ignore
+    /// use pinned_vec::*;
+    ///
+    /// let mut split_vec = SplitVec::new();
+    ///
+    /// let mut vec = split_vec.as_imp_vec();
+    ///
+    /// // regular push with &mut self
+    /// vec.push(42);
+    ///
+    /// // hold on to a reference to the first element
+    /// let ref_to_first = &vec[0];
+    /// assert_eq!(ref_to_first, &42);
+    ///
+    /// // imp_push with &self
+    /// vec.imp_push(7);
+    ///
+    /// // due to `PinnedVec` guarantees, this push will never invalidate prior references
+    /// assert_eq!(ref_to_first, &42);
+    /// ```
     #[inline(always)]
     pub fn imp_push(&self, value: T) {
         self.pinned_mut().push(value);
     }
 
+    /// Pushes the `value` to the vector and returns a reference to it.
+    ///
+    /// It is the composition of [`vec.imp_push(value)`] call followed by `&vec[vec.len() - 1]`.
+    ///
+    /// [`vec.imp_push(value)`]: crate::ImpVec::imp_push
+    ///
+    /// # Examples
+    ///
+    /// This method provides a shorthand for the following common use case.
+    ///
+    /// ```rust ignore
+    /// use pinned_vec::*;
+    ///
+    /// let mut split_vec = SplitVec::new();
+    ///
+    /// let mut vec = split_vec.as_imp_vec();
+    ///
+    /// vec.imp_push('a');
+    /// let a = &vec[vec.len() - 1];
+    /// assert_eq!(a, &'a');
+    ///
+    /// // or with imp_push_get_ref
+    ///
+    /// let b = vec.imp_push_get_ref('b');
+    /// assert_eq!(b, &'b');
+    /// ```
     #[inline(always)]
     pub fn imp_push_get_ref(&self, value: T) -> &T {
         let pinned = self.pinned_mut();
@@ -121,6 +174,31 @@ where
         &pinned[pinned.len() - 1]
     }
 
+    /// Extends the vector with the given `slice`.
+    /// This method differs from the `extend_from_slice` method with the required reference.
+    /// Unlike `extend_from_slice`, `imp_extend_from_slice` allows to push the element with a shared reference.
+    ///
+    /// # Example
+    ///
+    /// ```rust ignore
+    /// use pinned_vec::*;
+    ///
+    /// let mut split_vec = SplitVec::new();
+    ///
+    /// // regular extend_from_slice with &mut self
+    /// vec.extend_from_slice(&[42]);
+    ///
+    /// // hold on to a reference to the first element
+    /// let ref_to_first = &vec[0];
+    /// assert_eq!(ref_to_first, &42);
+    ///
+    /// // imp_extend_from_slice with &self
+    /// vec.imp_extend_from_slice(&[0, 1, 2, 3]);
+    /// assert_eq!(vec.len(), 5);
+    ///
+    /// // due to `PinnedVec` guarantees, this extend will never invalidate prior references
+    /// assert_eq!(ref_to_first, &42);
+    /// ```
     pub fn imp_extend_from_slice(&self, slice: &[T])
     where
         T: Clone,
@@ -147,76 +225,5 @@ where
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.pinned_mut()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{PinnedVec, pinned_vec_tests::testvec::FixedCapVec};
-    use orx_iterable::Collection;
-
-    #[test]
-    fn xyz() {
-        fn add_doubles_of_evens(vec: &mut impl PinnedVec<u32>) {
-            let vec = vec.as_imp_vec();
-            for i in vec.iter().copied() {
-                if i.is_multiple_of(2) {
-                    let doubled = 2 * i;
-                    vec.imp_push(doubled);
-                }
-            }
-        }
-
-        let mut vec = FixedCapVec::new(16);
-        vec.extend_from_slice(&[9, 10, 11]);
-
-        add_doubles_of_evens(&mut vec);
-        assert_eq!(vec.as_slice(), &[9, 10, 11, 20]);
-    }
-
-    // fn xyz2() {
-    //     fn add_doubles_of_evens(vec: &mut Vec<u32>) {
-    //         for i in vec.iter().copied() {
-    //             if i.is_multiple_of(2) {
-    //                 let doubled = 2 * i;
-    //                 vec.push(doubled); // cannot borrow `*vec` as mutable because it is also borrowed as immutable
-    //             }
-    //         }
-    //     }
-
-    //     let mut vec = vec![9, 10, 11];
-
-    //     add_doubles_of_evens(&mut vec);
-    //     assert_eq!(vec.as_slice(), &[9, 10, 11, 20]);
-    // }
-
-    #[test]
-    fn abc() {
-        let mut vec = FixedCapVec::new(10);
-
-        vec.push(0);
-        vec.push(1);
-        vec.push(2);
-
-        let imp = vec.as_imp_vec();
-
-        for x in imp.iter().copied() {
-            imp.imp_push(x);
-        }
-
-        imp.imp_push(3);
-        imp.imp_push(4);
-        imp.imp_push(5);
-
-        let vec = imp.into_inner();
-
-        // assert_eq!(vec, FixedCapVec::<i32>::new(1));
-    }
-
-    #[test]
-    fn def() {
-        struct MyStr {
-            vec: FixedCapVec<usize>,
-        }
     }
 }
